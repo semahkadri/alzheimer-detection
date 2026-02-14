@@ -1,0 +1,111 @@
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Categorie } from '../../../modeles/categorie.model';
+import { CategorieService } from '../../../services/categorie.service';
+
+@Component({
+  selector: 'app-formulaire-categorie',
+  standalone: true,
+  imports: [CommonModule, FormsModule, RouterLink],
+  template: `
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">
+              <i class="bi" [ngClass]="estModification ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
+              {{ estModification ? 'Modifier la Catégorie' : 'Nouvelle Catégorie' }}
+            </h4>
+          </div>
+          <div class="card-body">
+            <form #formulaire="ngForm" (ngSubmit)="sauvegarder()">
+
+              <div class="mb-3">
+                <label for="nom" class="form-label fw-semibold">Nom *</label>
+                <input type="text" class="form-control" id="nom" name="nom"
+                       [(ngModel)]="categorie.nom" required minlength="2" maxlength="100"
+                       #nom="ngModel"
+                       [ngClass]="{'is-invalid': nom.invalid && nom.touched}">
+                <div class="invalid-feedback" *ngIf="nom.errors?.['required']">
+                  Le nom est obligatoire
+                </div>
+                <div class="invalid-feedback" *ngIf="nom.errors?.['minlength']">
+                  Le nom doit contenir au moins 2 caractères
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label for="description" class="form-label fw-semibold">Description</label>
+                <textarea class="form-control" id="description" name="description"
+                          rows="4" [(ngModel)]="categorie.description"
+                          maxlength="500" #desc="ngModel"></textarea>
+                <small class="text-muted">{{ categorie.description?.length || 0 }}/500 caractères</small>
+              </div>
+
+              <div class="d-flex justify-content-between">
+                <a routerLink="/categories" class="btn btn-secondary">
+                  <i class="bi bi-arrow-left me-1"></i>Retour
+                </a>
+                <button type="submit" class="btn btn-primary"
+                        [disabled]="formulaire.invalid || enCours">
+                  <span *ngIf="enCours" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="!enCours" class="bi bi-check-lg me-1"></i>
+                  {{ estModification ? 'Modifier' : 'Créer' }}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+})
+export class FormulaireCategorieComponent implements OnInit {
+  categorie: Categorie = { nom: '', description: '' };
+  estModification = false;
+  enCours = false;
+  categorieId: number | null = null;
+
+  constructor(
+    private categorieService: CategorieService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.estModification = true;
+      this.categorieId = +id;
+      this.categorieService.obtenirParId(this.categorieId).subscribe({
+        next: (data) => this.categorie = data,
+        error: () => this.router.navigate(['/categories'])
+      });
+    }
+  }
+
+  sauvegarder(): void {
+    this.enCours = true;
+
+    if (this.estModification && this.categorieId) {
+      this.categorieService.modifier(this.categorieId, this.categorie).subscribe({
+        next: () => this.router.navigate(['/categories']),
+        error: (err) => {
+          this.enCours = false;
+          console.error('Erreur lors de la modification', err);
+        }
+      });
+    } else {
+      this.categorieService.creer(this.categorie).subscribe({
+        next: () => this.router.navigate(['/categories']),
+        error: (err) => {
+          this.enCours = false;
+          console.error('Erreur lors de la création', err);
+        }
+      });
+    }
+  }
+}
