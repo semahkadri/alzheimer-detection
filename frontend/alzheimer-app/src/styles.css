@@ -1409,8 +1409,9 @@ body {
 .fo-filter-bar {
   display: flex;
   gap: 12px;
-  margin-bottom: 28px;
+  margin-bottom: 16px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .fo-search-box {
@@ -1459,6 +1460,219 @@ body {
   outline: none;
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+}
+
+/* ==================== FO TOOLBAR (Sort + Count) ==================== */
+.fo-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fo-toolbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.fo-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fo-results-count {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.fo-results-count strong {
+  color: var(--text-primary);
+}
+
+.fo-results-filtered {
+  color: var(--primary);
+  font-size: 0.82rem;
+}
+
+.fo-clear-filters {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 4px;
+  font-family: inherit;
+  transition: var(--transition);
+}
+
+.fo-clear-filters:hover {
+  text-decoration: underline;
+}
+
+.fo-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fo-sort-control label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin: 0;
+}
+
+.fo-sort-control select {
+  padding: 7px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-family: inherit;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.fo-sort-control select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(26,115,232,0.12);
+}
+
+/* ==================== FO FILTER CHIPS ==================== */
+.fo-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.fo-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.fo-chip button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  opacity: 0.7;
+  transition: var(--transition);
+}
+
+.fo-chip button:hover {
+  opacity: 1;
+  color: var(--danger);
+}
+
+/* ==================== FO PAGINATION ==================== */
+.fo-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 32px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.fo-pagination-info {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.fo-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fo-pagination-controls button {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fo-pagination-controls button:hover:not(:disabled):not(.active) {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.fo-pagination-controls button.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.fo-pagination-controls button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.fo-pagination-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fo-pagination-size label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.fo-pagination-size select {
+  padding: 5px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  background: var(--bg-card);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.fo-pagination-size select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.fo-filter-stock {
+  min-width: 180px;
 }
 
 /* ==================== FO BUTTONS ==================== */
@@ -1657,13 +1871,38 @@ body {
 
   .fo-filter-bar {
     flex-direction: column;
+    align-items: stretch;
   }
 
-  .fo-filter-select {
+  .fo-filter-select,
+  .fo-filter-stock {
     min-width: 100%;
   }
 
   .fo-product-detail-img {
     height: 220px;
+  }
+
+  .fo-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fo-pagination {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .fo-sort-control {
+    width: 100%;
+  }
+
+  .fo-sort-control select {
+    flex: 1;
+  }
+
+  .fo-filter-chips {
+    flex-wrap: wrap;
   }
 }
