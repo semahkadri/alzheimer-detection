@@ -2,7 +2,6 @@ package com.alzheimer.stock.service;
 
 import com.alzheimer.stock.dto.CategorieDTO;
 import com.alzheimer.stock.dto.CommandeDTO;
-import com.alzheimer.stock.dto.LigneCommandeDTO;
 import com.alzheimer.stock.dto.ProduitDTO;
 import com.alzheimer.stock.dto.TableauDeBordDTO;
 import com.alzheimer.stock.entite.*;
@@ -92,21 +91,7 @@ public class TableauDeBordServiceImpl implements TableauDeBordService {
     }
 
     private CommandeDTO convertirCommandeEnDTO(Commande commande) {
-        List<LigneCommandeDTO> lignesDTO = commande.getLignes().stream()
-                .map(l -> LigneCommandeDTO.builder()
-                        .id(l.getId())
-                        .produitId(l.getProduit().getId())
-                        .nomProduit(l.getNomProduit())
-                        .prixUnitaire(l.getPrixUnitaire())
-                        .quantite(l.getQuantite())
-                        .sousTotal(l.getSousTotal())
-                        .build())
-                .collect(Collectors.toList());
-
-        int nombreArticles = lignesDTO.stream()
-                .mapToInt(LigneCommandeDTO::getQuantite)
-                .sum();
-
+        // Dashboard summary only — skip lazy-loaded lignes to avoid N+1 queries
         return CommandeDTO.builder()
                 .id(commande.getId())
                 .reference(commande.getReference())
@@ -116,8 +101,8 @@ public class TableauDeBordServiceImpl implements TableauDeBordService {
                 .adresseLivraison(commande.getAdresseLivraison())
                 .statut(commande.getStatut())
                 .montantTotal(commande.getMontantTotal())
-                .lignes(lignesDTO)
-                .nombreArticles(nombreArticles)
+                .lignes(List.of())
+                .nombreArticles(0)
                 .dateCommande(commande.getDateCommande())
                 .dateModification(commande.getDateModification())
                 .build();

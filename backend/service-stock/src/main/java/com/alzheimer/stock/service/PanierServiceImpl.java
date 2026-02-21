@@ -98,7 +98,7 @@ public class PanierServiceImpl implements PanierService {
 
         if (quantite <= 0) {
             panier.getLignes().remove(ligne);
-            panierRepository.save(panier);
+            panierRepository.saveAndFlush(panier);
         } else {
             Produit produit = ligne.getProduit();
             if (quantite > produit.getQuantite()) {
@@ -125,7 +125,7 @@ public class PanierServiceImpl implements PanierService {
             throw new ResourceIntrouvableException("Ligne panier", "produitId", produitId);
         }
 
-        panierRepository.save(panier);
+        panierRepository.saveAndFlush(panier);
         return convertirEnDTO(panier);
     }
 
