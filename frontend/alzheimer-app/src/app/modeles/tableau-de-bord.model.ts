@@ -1,4 +1,5 @@
 import { Categorie } from './categorie.model';
+import { Commande } from './commande.model';
 import { Produit } from './produit.model';
 
 export interface TableauDeBord {
@@ -9,4 +10,8 @@ export interface TableauDeBord {
   valeurTotaleStock: number;
   dernieresCategories: Categorie[];
   derniersProduits: Produit[];
+  totalCommandes: number;
+  commandesEnAttente: number;
+  chiffreAffaires: number;
+  dernieresCommandes: Commande[];
 }

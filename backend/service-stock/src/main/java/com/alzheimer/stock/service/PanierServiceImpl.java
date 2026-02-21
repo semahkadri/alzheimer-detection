@@ -97,7 +97,8 @@ public class PanierServiceImpl implements PanierService {
                 .orElseThrow(() -> new ResourceIntrouvableException("Ligne panier", "produitId", produitId));
 
         if (quantite <= 0) {
-            lignePanierRepository.delete(ligne);
+            panier.getLignes().remove(ligne);
+            panierRepository.save(panier);
         } else {
             Produit produit = ligne.getProduit();
             if (quantite > produit.getQuantite()) {
@@ -109,7 +110,7 @@ public class PanierServiceImpl implements PanierService {
             lignePanierRepository.save(ligne);
         }
 
-        return obtenirPanier(sessionId);
+        return convertirEnDTO(panier);
     }
 
     @Override
@@ -117,12 +118,15 @@ public class PanierServiceImpl implements PanierService {
         Panier panier = panierRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceIntrouvableException("Panier", "sessionId", sessionId));
 
-        LignePanier ligne = lignePanierRepository
-                .findByPanierIdAndProduitId(panier.getId(), produitId)
-                .orElseThrow(() -> new ResourceIntrouvableException("Ligne panier", "produitId", produitId));
+        boolean removed = panier.getLignes().removeIf(
+            l -> l.getProduit().getId().equals(produitId));
 
-        lignePanierRepository.delete(ligne);
-        return obtenirPanier(sessionId);
+        if (!removed) {
+            throw new ResourceIntrouvableException("Ligne panier", "produitId", produitId);
+        }
+
+        panierRepository.save(panier);
+        return convertirEnDTO(panier);
     }
 
     @Override

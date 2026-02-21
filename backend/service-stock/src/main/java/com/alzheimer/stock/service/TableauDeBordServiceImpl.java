@@ -1,11 +1,13 @@
 package com.alzheimer.stock.service;
 
 import com.alzheimer.stock.dto.CategorieDTO;
+import com.alzheimer.stock.dto.CommandeDTO;
+import com.alzheimer.stock.dto.LigneCommandeDTO;
 import com.alzheimer.stock.dto.ProduitDTO;
 import com.alzheimer.stock.dto.TableauDeBordDTO;
-import com.alzheimer.stock.entite.Categorie;
-import com.alzheimer.stock.entite.Produit;
+import com.alzheimer.stock.entite.*;
 import com.alzheimer.stock.repository.CategorieRepository;
+import com.alzheimer.stock.repository.CommandeRepository;
 import com.alzheimer.stock.repository.ProduitRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +26,7 @@ public class TableauDeBordServiceImpl implements TableauDeBordService {
 
     private final CategorieRepository categorieRepository;
     private final ProduitRepository produitRepository;
+    private final CommandeRepository commandeRepository;
 
     @Override
     public TableauDeBordDTO obtenirTableauDeBord() {
@@ -48,6 +51,20 @@ public class TableauDeBordServiceImpl implements TableauDeBordService {
                 .map(this::convertirProduitEnDTO)
                 .collect(Collectors.toList());
 
+        // Order statistics
+        long totalCommandes = commandeRepository.count();
+        long commandesEnAttente = commandeRepository.countByStatut(StatutCommande.EN_ATTENTE);
+
+        BigDecimal chiffreAffaires = commandeRepository.findAll().stream()
+                .map(Commande::getMontantTotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        PageRequest derniers5Cmd = PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "dateCommande"));
+        List<CommandeDTO> dernieresCommandes = commandeRepository.findAll(derniers5Cmd)
+                .getContent().stream()
+                .map(this::convertirCommandeEnDTO)
+                .collect(Collectors.toList());
+
         return TableauDeBordDTO.builder()
                 .totalCategories(totalCategories)
                 .totalProduits(totalProduits)
@@ -56,6 +73,10 @@ public class TableauDeBordServiceImpl implements TableauDeBordService {
                 .valeurTotaleStock(valeurTotaleStock)
                 .dernieresCategories(dernieresCategories)
                 .derniersProduits(derniersProduits)
+                .totalCommandes(totalCommandes)
+                .commandesEnAttente(commandesEnAttente)
+                .chiffreAffaires(chiffreAffaires)
+                .dernieresCommandes(dernieresCommandes)
                 .build();
     }
 
@@ -67,6 +88,38 @@ public class TableauDeBordServiceImpl implements TableauDeBordService {
                 .dateCreation(categorie.getDateCreation())
                 .dateModification(categorie.getDateModification())
                 .nombreProduits(categorie.getProduits() != null ? categorie.getProduits().size() : 0)
+                .build();
+    }
+
+    private CommandeDTO convertirCommandeEnDTO(Commande commande) {
+        List<LigneCommandeDTO> lignesDTO = commande.getLignes().stream()
+                .map(l -> LigneCommandeDTO.builder()
+                        .id(l.getId())
+                        .produitId(l.getProduit().getId())
+                        .nomProduit(l.getNomProduit())
+                        .prixUnitaire(l.getPrixUnitaire())
+                        .quantite(l.getQuantite())
+                        .sousTotal(l.getSousTotal())
+                        .build())
+                .collect(Collectors.toList());
+
+        int nombreArticles = lignesDTO.stream()
+                .mapToInt(LigneCommandeDTO::getQuantite)
+                .sum();
+
+        return CommandeDTO.builder()
+                .id(commande.getId())
+                .reference(commande.getReference())
+                .nomClient(commande.getNomClient())
+                .emailClient(commande.getEmailClient())
+                .telephoneClient(commande.getTelephoneClient())
+                .adresseLivraison(commande.getAdresseLivraison())
+                .statut(commande.getStatut())
+                .montantTotal(commande.getMontantTotal())
+                .lignes(lignesDTO)
+                .nombreArticles(nombreArticles)
+                .dateCommande(commande.getDateCommande())
+                .dateModification(commande.getDateModification())
                 .build();
     }
 

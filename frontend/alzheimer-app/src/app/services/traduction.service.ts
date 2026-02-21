@@ -167,6 +167,13 @@ const DICT: Record<string, TranslationEntry> = {
   'tdb.aucuneCat': { fr: 'Aucune catégorie', en: 'No categories' },
   'tdb.aucunProd': { fr: 'Aucun produit', en: 'No products' },
   'tdb.qte': { fr: 'Qté:', en: 'Qty:' },
+  'tdb.commandes': { fr: 'Commandes', en: 'Orders' },
+  'tdb.enAttente': { fr: 'En Attente', en: 'Pending' },
+  'tdb.chiffreAffaires': { fr: 'Chiffre d\'Affaires (TND)', en: 'Revenue (TND)' },
+  'tdb.dernieresCmd': { fr: 'Dernières Commandes', en: 'Latest Orders' },
+  'tdb.aucuneCmd': { fr: 'Aucune commande', en: 'No orders' },
+  'tdb.voirCommandes': { fr: 'Voir les commandes', en: 'View orders' },
+  'tdb.gererCommandes': { fr: 'Gérer les commandes', en: 'Manage orders' },
 
   // ─── Liste Catégories ────────────────────────────────────
   'lc.titre': { fr: 'Gestion des Catégories', en: 'Category Management' },
@@ -314,6 +321,8 @@ const DICT: Record<string, TranslationEntry> = {
   'checkout.confirmer': { fr: 'Confirmer la commande', en: 'Confirm order' },
   'checkout.recapitulatif': { fr: 'Récapitulatif de commande', en: 'Order Summary' },
   'checkout.erreur': { fr: 'Erreur lors de la création de la commande.', en: 'Error creating order.' },
+  'checkout.telephoneObligatoire': { fr: 'Le téléphone est obligatoire', en: 'Phone number is required' },
+  'checkout.adresseObligatoire': { fr: 'L\'adresse de livraison est obligatoire', en: 'Delivery address is required' },
 
   // ─── Confirmation Commande ─────────────────────────────
   'confirmation.introuvable': { fr: 'Commande introuvable.', en: 'Order not found.' },

@@ -19,9 +19,11 @@ public class CreerCommandeDTO {
     @Email(message = "L'email doit être valide")
     private String emailClient;
 
+    @NotBlank(message = "Le téléphone est obligatoire")
     @Size(max = 20, message = "Le téléphone ne peut pas dépasser 20 caractères")
     private String telephoneClient;
 
+    @NotBlank(message = "L'adresse de livraison est obligatoire")
     @Size(max = 1000, message = "L'adresse ne peut pas dépasser 1000 caractères")
     private String adresseLivraison;
 

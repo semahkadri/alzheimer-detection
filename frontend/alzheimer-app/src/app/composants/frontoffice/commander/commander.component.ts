@@ -75,18 +75,22 @@ import { CreerCommande } from '../../../modeles/commande.model';
                         <div class="invalid-feedback">{{ t.tr('checkout.emailInvalide') }}</div>
                       </div>
                       <div class="col-md-6 mb-3">
-                        <label for="telephone" class="form-label">{{ t.tr('checkout.telephone') }}</label>
+                        <label for="telephone" class="form-label">{{ t.tr('checkout.telephone') }} <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="telephone" name="telephoneClient"
-                               [(ngModel)]="commande.telephoneClient" maxlength="20"
-                               [placeholder]="t.tr('checkout.placeholderTel')">
+                               [(ngModel)]="commande.telephoneClient" required maxlength="20"
+                               #tel="ngModel" [placeholder]="t.tr('checkout.placeholderTel')"
+                               [ngClass]="{'is-invalid': tel.invalid && tel.touched}">
+                        <div class="invalid-feedback">{{ t.tr('checkout.telephoneObligatoire') }}</div>
                       </div>
                     </div>
 
                     <div class="mb-4">
-                      <label for="adresse" class="form-label">{{ t.tr('checkout.adresse') }}</label>
+                      <label for="adresse" class="form-label">{{ t.tr('checkout.adresse') }} <span class="text-danger">*</span></label>
                       <textarea class="form-control" id="adresse" name="adresseLivraison"
-                                rows="3" [(ngModel)]="commande.adresseLivraison"
-                                maxlength="1000" [placeholder]="t.tr('checkout.placeholderAdresse')"></textarea>
+                                rows="3" [(ngModel)]="commande.adresseLivraison" required
+                                #adresse="ngModel" maxlength="1000" [placeholder]="t.tr('checkout.placeholderAdresse')"
+                                [ngClass]="{'is-invalid': adresse.invalid && adresse.touched}"></textarea>
+                      <div class="invalid-feedback">{{ t.tr('checkout.adresseObligatoire') }}</div>
                     </div>
 
                     <!-- Error -->

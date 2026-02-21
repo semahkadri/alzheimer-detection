@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TableauDeBordService } from '../../services/tableau-de-bord.service';
 import { TableauDeBord } from '../../modeles/tableau-de-bord.model';
 import { Categorie } from '../../modeles/categorie.model';
+import { Commande } from '../../modeles/commande.model';
 import { Produit } from '../../modeles/produit.model';
 import { TraductionService } from '../../services/traduction.service';
 
@@ -96,6 +97,49 @@ import { TraductionService } from '../../services/traduction.service';
           </div>
         </div>
 
+        <!-- Order Stat Cards -->
+        <div class="row g-3 mb-4">
+          <div class="col-lg-4 col-md-6">
+            <a routerLink="/admin/commandes" class="stat-card">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon me-3" style="background: #e3f2fd; color: #1565c0;">
+                  <i class="bi bi-receipt-cutoff"></i>
+                </div>
+                <div>
+                  <div class="stat-number">{{ totalCommandes }}</div>
+                  <div class="stat-label">{{ t.tr('tdb.commandes') }}</div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-lg-4 col-md-6">
+            <a routerLink="/admin/commandes" class="stat-card">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon me-3" style="background: #fff3e0; color: #e65100;">
+                  <i class="bi bi-hourglass-split"></i>
+                </div>
+                <div>
+                  <div class="stat-number">{{ commandesEnAttente }}</div>
+                  <div class="stat-label">{{ t.tr('tdb.enAttente') }}</div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <div class="col-lg-4 col-md-6">
+            <div class="stat-card">
+              <div class="d-flex align-items-center">
+                <div class="stat-icon me-3" style="background: #e8f5e9; color: #2e7d32;">
+                  <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div>
+                  <div class="stat-number" style="font-size: 1.4rem;">{{ chiffreAffaires | number:'1.0-0' }}</div>
+                  <div class="stat-label">{{ t.tr('tdb.chiffreAffaires') }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Rupture de stock -->
         <div *ngIf="produitsEnRupture > 0" class="alert alert-danger d-flex align-items-center mb-4" role="alert">
           <i class="bi bi-x-circle-fill me-2 fs-5"></i>
@@ -107,7 +151,7 @@ import { TraductionService } from '../../services/traduction.service';
 
         <!-- Quick Actions -->
         <div class="row g-3 mb-4">
-          <div class="col-md-4">
+          <div class="col-md-3">
             <a routerLink="/admin/categories/ajouter" class="quick-action">
               <i class="bi bi-plus-circle-fill" style="background: var(--primary-light); color: var(--primary);"></i>
               <div>
@@ -116,7 +160,7 @@ import { TraductionService } from '../../services/traduction.service';
               </div>
             </a>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <a routerLink="/admin/produits/ajouter" class="quick-action">
               <i class="bi bi-plus-circle-fill" style="background: var(--accent-light); color: var(--accent);"></i>
               <div>
@@ -125,7 +169,7 @@ import { TraductionService } from '../../services/traduction.service';
               </div>
             </a>
           </div>
-          <div class="col-md-4">
+          <div class="col-md-3">
             <a routerLink="/admin/produits" class="quick-action">
               <i class="bi bi-list-ul" style="background: var(--warning-light); color: var(--warning);"></i>
               <div>
@@ -134,12 +178,21 @@ import { TraductionService } from '../../services/traduction.service';
               </div>
             </a>
           </div>
+          <div class="col-md-3">
+            <a routerLink="/admin/commandes" class="quick-action">
+              <i class="bi bi-receipt-cutoff" style="background: #e3f2fd; color: #1565c0;"></i>
+              <div>
+                <span>{{ t.tr('tdb.voirCommandes') }}</span>
+                <small>{{ t.tr('tdb.gererCommandes') }}</small>
+              </div>
+            </a>
+          </div>
         </div>
 
         <!-- Recent data -->
         <div class="row g-4">
           <!-- Catégories récentes -->
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-bold"><i class="bi bi-tags-fill me-2 text-primary"></i>{{ t.tr('tdb.dernieresCat') }}</h6>
@@ -169,7 +222,7 @@ import { TraductionService } from '../../services/traduction.service';
           </div>
 
           <!-- Produits récents -->
-          <div class="col-lg-6">
+          <div class="col-lg-4">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0 fw-bold"><i class="bi bi-box-seam-fill me-2 text-primary"></i>{{ t.tr('tdb.derniersProd') }}</h6>
@@ -204,6 +257,46 @@ import { TraductionService } from '../../services/traduction.service';
               </div>
             </div>
           </div>
+
+          <!-- Dernières Commandes -->
+          <div class="col-lg-4">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="bi bi-receipt-cutoff me-2 text-primary"></i>{{ t.tr('tdb.dernieresCmd') }}</h6>
+                <a routerLink="/admin/commandes" class="btn btn-sm btn-outline-primary">
+                  {{ t.tr('common.voirTout') }} <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              </div>
+              <div class="card-body p-0">
+                <div *ngIf="commandes.length === 0" class="empty-state">
+                  <i class="bi bi-inbox d-block"></i>
+                  <p>{{ t.tr('tdb.aucuneCmd') }}</p>
+                </div>
+                <div class="list-group list-group-flush" *ngIf="commandes.length > 0">
+                  <a *ngFor="let cmd of commandes" [routerLink]="['/admin/commandes', cmd.id]"
+                     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-4 py-3">
+                    <div>
+                      <span class="fw-semibold" style="font-size: 0.88rem;">{{ cmd.reference }}</span>
+                      <small class="d-block text-muted">{{ cmd.nomClient }}</small>
+                    </div>
+                    <div class="text-end">
+                      <span class="fw-bold" style="font-size: 0.88rem;">{{ cmd.montantTotal | number:'1.2-2' }} TND</span>
+                      <small class="d-block">
+                        <span class="badge" [ngClass]="{
+                          'bg-warning text-dark': cmd.statut === 'EN_ATTENTE',
+                          'bg-info': cmd.statut === 'CONFIRMEE',
+                          'bg-primary': cmd.statut === 'EN_PREPARATION',
+                          'bg-secondary': cmd.statut === 'EXPEDIEE',
+                          'bg-success': cmd.statut === 'LIVREE',
+                          'bg-danger': cmd.statut === 'ANNULEE'
+                        }">{{ cmd.statut }}</span>
+                      </small>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -212,11 +305,15 @@ import { TraductionService } from '../../services/traduction.service';
 export class TableauDeBordComponent implements OnInit {
   categories: Categorie[] = [];
   produits: Produit[] = [];
+  commandes: Commande[] = [];
   totalCategories = 0;
   totalProduits = 0;
   produitsStockBas = 0;
   produitsEnRupture = 0;
   valeurTotaleStock = 0;
+  totalCommandes = 0;
+  commandesEnAttente = 0;
+  chiffreAffaires = 0;
   chargement = true;
   erreur = false;
 
@@ -242,6 +339,10 @@ export class TableauDeBordComponent implements OnInit {
         this.valeurTotaleStock = data.valeurTotaleStock;
         this.categories = data.dernieresCategories;
         this.produits = data.derniersProduits;
+        this.totalCommandes = data.totalCommandes;
+        this.commandesEnAttente = data.commandesEnAttente;
+        this.chiffreAffaires = data.chiffreAffaires;
+        this.commandes = data.dernieresCommandes || [];
         this.chargement = false;
       },
       error: () => {
