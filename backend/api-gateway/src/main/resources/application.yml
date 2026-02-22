@@ -31,6 +31,26 @@ spring:
             allowedHeaders: "*"
             allowCredentials: true
 
+info:
+  app:
+    name: API Gateway - Alzheimer Detection
+    description: Passerelle API pour le routage des microservices
+    version: 1.0.0
+  services:
+    stock: /api/stock/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  info:
+    env:
+      enabled: true
+  endpoint:
+    gateway:
+      enabled: true
+
 eureka:
   client:
     service-url:

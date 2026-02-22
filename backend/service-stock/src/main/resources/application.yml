@@ -30,6 +30,21 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: method
 
+info:
+  app:
+    name: Service Stock - Gestion de Stock
+    description: Microservice de gestion de stock (Catégories, Produits, Commandes, Panier)
+    version: 1.0.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  info:
+    env:
+      enabled: true
+
 eureka:
   client:
     service-url:
