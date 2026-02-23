@@ -38,7 +38,9 @@ Le module actuellement développé est la **Gestion de Stock** (Catégorie / Pro
 - Assurer la **traçabilité** avec dates de création et de modification
 - Fournir une **interface backoffice** professionnelle pour les administrateurs (sous `/admin`)
 - Fournir une **interface frontoffice** publique avec catalogue, panier et passage de commande (sous `/`)
+- Fournir une **analyse de stock avancée** avec classification ABC, indicateurs de performance (KPI), tendance des ventes, scores de santé produit et prévisions de réapprovisionnement
 - Proposer une **interface bilingue FR/EN** avec bouton de changement de langue et persistance du choix
+- Offrir un **mode sombre / clair** (Dark / Light mode) avec persistance du choix dans `localStorage`
 - Exposer des **API REST documentées** (Swagger/OpenAPI) pour l'intégration avec les autres modules
 
 ---
@@ -87,8 +89,8 @@ Le projet suit une architecture **microservices** avec les composants suivants :
 |-----------|------|------|
 | **Eureka Server** | Registre de découverte de services. Tous les microservices s'y enregistrent automatiquement au démarrage. Permet la résolution dynamique des adresses. | 8761 |
 | **API Gateway** | Point d'entrée unique pour le frontend en production. Route les requêtes vers les microservices. Gère le CORS et le load balancing. | 8080 |
-| **Service Stock** | Microservice métier responsable de la gestion des catégories, produits, panier, commandes et tableau de bord. Expose les API REST CRUD et la documentation Swagger. | 8081 |
-| **Frontend Angular** | Interface web comprenant un **frontoffice** public (catalogue, panier, commande, détail produit, catégories) et un **backoffice** d'administration (sidebar, tableau de bord, CRUD catégories, produits et gestion des commandes). | 4200 |
+| **Service Stock** | Microservice métier responsable de la gestion des catégories, produits, panier, commandes, tableau de bord et analyse de stock. Expose les API REST CRUD, l'analyse avancée (KPIs, ABC, tendances) et la documentation Swagger. | 8081 |
+| **Frontend Angular** | Interface web comprenant un **frontoffice** public (catalogue, panier, commande, détail produit, catégories) et un **backoffice** d'administration (sidebar, tableau de bord, CRUD catégories/produits, gestion commandes, analyse de stock). Supporte le mode sombre/clair et le bilingue FR/EN. | 4200 |
 | **PostgreSQL** | Système de gestion de base de données relationnelle stockant les catégories et produits. | 5432 |
 
 ---
@@ -179,7 +181,8 @@ alzheimer-detection/
 │           │   │   ├── LignePanierDTO.java              # Objet de transfert Ligne Panier
 │           │   │   ├── CommandeDTO.java                 # Objet de transfert Commande
 │           │   │   ├── LigneCommandeDTO.java            # Objet de transfert Ligne Commande
-│           │   │   └── CreerCommandeDTO.java            # DTO création commande (checkout)
+│           │   │   ├── CreerCommandeDTO.java            # DTO création commande (checkout)
+│           │   │   └── AnalyseStockDTO.java             # DTO analyse de stock (KPIs, ABC, tendances)
 │           │   ├── repository/
 │           │   │   ├── CategorieRepository.java         # Accès données Catégorie
 │           │   │   ├── ProduitRepository.java           # Accès données Produit
@@ -196,13 +199,16 @@ alzheimer-detection/
 │           │   │   ├── PanierService.java               # Interface service Panier
 │           │   │   ├── PanierServiceImpl.java           # Implémentation Panier
 │           │   │   ├── CommandeService.java             # Interface service Commande
-│           │   │   └── CommandeServiceImpl.java         # Implémentation Commande
+│           │   │   ├── CommandeServiceImpl.java         # Implémentation Commande
+│           │   │   ├── AnalyseStockService.java         # Interface service Analyse Stock
+│           │   │   └── AnalyseStockServiceImpl.java     # Implémentation Analyse Stock (ABC, KPIs, prévisions)
 │           │   ├── controleur/
 │           │   │   ├── CategorieControleur.java         # REST Controller Catégorie
 │           │   │   ├── ProduitControleur.java           # REST Controller Produit
 │           │   │   ├── TableauDeBordControleur.java     # REST Controller Dashboard
 │           │   │   ├── PanierControleur.java            # REST Controller Panier
-│           │   │   └── CommandeControleur.java          # REST Controller Commande
+│           │   │   ├── CommandeControleur.java          # REST Controller Commande
+│           │   │   └── AnalyseStockControleur.java      # REST Controller Analyse Stock
 │           │   └── exception/
 │           │       ├── ResourceIntrouvableException.java # Exception 404
 │           │       └── GestionGlobaleExceptions.java     # Gestionnaire global d'erreurs
@@ -217,7 +223,7 @@ alzheimer-detection/
 │       └── src/
 │           ├── index.html                               # Page HTML principale
 │           ├── main.ts                                  # Point d'entrée Angular
-│           ├── styles.css                               # Styles globaux (backoffice + frontoffice .fo-*)
+│           ├── styles.css                               # Styles globaux (backoffice + frontoffice .fo-* + dark mode)
 │           ├── environments/
 │           │   ├── environment.ts                       # Config développement (port 8081)
 │           │   └── environment.prod.ts                  # Config production (gateway 8080)
@@ -230,14 +236,17 @@ alzheimer-detection/
 │               │   ├── produit.model.ts                 # Interface Produit
 │               │   ├── tableau-de-bord.model.ts         # Interface Tableau de Bord
 │               │   ├── panier.model.ts                  # Interface Panier + LignePanier
-│               │   └── commande.model.ts                # Interface Commande + CreerCommande
+│               │   ├── commande.model.ts                # Interface Commande + CreerCommande
+│               │   └── analyse-stock.model.ts           # Interfaces AnalyseStock, AnalyseProduit, KPIs
 │               ├── services/
 │               │   ├── categorie.service.ts             # Service HTTP Catégorie
 │               │   ├── produit.service.ts               # Service HTTP Produit
 │               │   ├── tableau-de-bord.service.ts       # Service HTTP Dashboard
 │               │   ├── panier.service.ts                # Service HTTP Panier (BehaviorSubject)
 │               │   ├── commande.service.ts              # Service HTTP Commande
-│               │   └── traduction.service.ts            # Service i18n FR/EN (dictionnaire + toggle)
+│               │   ├── analyse-stock.service.ts         # Service HTTP Analyse Stock
+│               │   ├── traduction.service.ts            # Service i18n FR/EN (dictionnaire + toggle)
+│               │   └── theme.service.ts                 # Service Dark/Light mode (localStorage + CSS)
 │               └── composants/
 │                   ├── layouts/                          # Wrappers de mise en page
 │                   │   ├── layout-frontoffice/
@@ -274,11 +283,13 @@ alzheimer-detection/
 │                   │   │   └── liste-categories.component.ts  # Liste (recherche, pagination)
 │                   │   └── formulaire-categorie/
 │                   │       └── formulaire-categorie.component.ts  # Formulaire CRUD
-│                   └── produit/
-│                       ├── liste-produits/
-│                       │   └── liste-produits.component.ts  # Liste (recherche, filtres, pagination)
-│                       └── formulaire-produit/
-│                           └── formulaire-produit.component.ts  # Formulaire CRUD
+│                   ├── produit/
+│                   │   ├── liste-produits/
+│                   │   │   └── liste-produits.component.ts  # Liste (recherche, filtres, pagination)
+│                   │   └── formulaire-produit/
+│                   │       └── formulaire-produit.component.ts  # Formulaire CRUD
+│                   └── analyse-stock/
+│                       └── analyse-stock.component.ts   # Dashboard analyse stock (KPIs, ABC, tendances)
 │
 ├── database/
 │   └── init.sql                                         # Script d'initialisation SQL
@@ -321,6 +332,7 @@ La passerelle API est le **point d'entrée unique** pour toutes les requêtes pr
 | `/api/stock/tableau-de-bord` | `/api/tableau-de-bord` | `service-stock` |
 | `/api/stock/panier/**` | `/api/panier/**` | `service-stock` |
 | `/api/stock/commandes/**` | `/api/commandes/**` | `service-stock` |
+| `/api/stock/analyse-stock` | `/api/analyse-stock` | `service-stock` |
 
 ### 5.3 - Service Stock (Module métier)
 
@@ -400,6 +412,7 @@ Requête HTTP
 | `panier` | Panier | ManyToOne, obligatoire |
 | `produit` | Produit | ManyToOne, obligatoire |
 | `quantite` | Integer | Obligatoire, min 1 |
+| `dateAjout` | LocalDateTime | Automatique |
 
 **Commande** (`Commande.java`)
 
@@ -415,6 +428,7 @@ Requête HTTP
 | `montantTotal` | BigDecimal | Calculé automatiquement |
 | `lignes` | List\<LigneCommande\> | Relation OneToMany, cascade ALL |
 | `dateCommande` | LocalDateTime | Automatique, non modifiable |
+| `dateModification` | LocalDateTime | Automatique |
 
 **LigneCommande** (`LigneCommande.java`)
 
@@ -461,7 +475,8 @@ Requête HTTP
 │ id           │                 │ id           │                  │              │
 │ sessionId    │                 │ panier_id    │                  │              │
 │ dateCreation │                 │ produit_id   │                  │              │
-│              │                 │ quantite     │                  │              │
+│ dateMod...   │                 │ quantite     │                  │              │
+│              │                 │ dateAjout    │                  │              │
 └──────────────┘                 └──────────────┘                  └──────────────┘
 
 ┌──────────────┐       1    *    ┌───────────────┐        *    1    ┌──────────────┐
@@ -470,19 +485,21 @@ Requête HTTP
 │ id           │                 │ id            │                  │              │
 │ reference    │                 │ commande_id   │                  │              │
 │ nomClient    │                 │ produit_id    │                  │              │
-│ statut       │                 │ nomProduit    │                  │              │
-│ montantTotal │                 │ prixUnitaire  │                  │              │
-│ dateCommande │                 │ quantite      │                  │              │
-└──────────────┘                 │ sousTotal     │                  │              │
-                                 └───────────────┘                  └──────────────┘
+│ emailClient  │                 │ nomProduit    │                  │              │
+│ statut       │                 │ prixUnitaire  │                  │              │
+│ montantTotal │                 │ quantite      │                  │              │
+│ dateCommande │                 │ sousTotal     │                  │              │
+│ dateMod...   │                 └───────────────┘                  │              │
+└──────────────┘                                                    └──────────────┘
 
 - Une catégorie peut contenir plusieurs produits (OneToMany)
 - Un produit appartient à une seule catégorie (ManyToOne)
 - La suppression d'une catégorie entraîne la suppression de ses produits (CASCADE)
 - Un panier contient plusieurs lignes de panier (OneToMany)
 - Chaque ligne de panier référence un produit avec une quantité
-- Une commande contient plusieurs lignes de commande (snapshots)
-- L'annulation d'une commande restaure le stock des produits
+- Une commande contient plusieurs lignes de commande (snapshots du nom et du prix)
+- L'annulation d'une commande restaure automatiquement le stock des produits
+- L'analyse de stock est calculée dynamiquement à partir des tables `produits`, `commandes` et `lignes_commande` (pas de table dédiée)
 ```
 
 #### Pattern DTO (Data Transfer Object)
@@ -491,7 +508,7 @@ Les DTOs sont utilisés pour :
 - **Découpler** la couche de présentation de la couche de persistance
 - **Contrôler** les données exposées via l'API
 - **Valider** les données entrantes avec des annotations Jakarta Validation
-- **Agréger** les données pour le tableau de bord (`TableauDeBordDTO`)
+- **Agréger** les données pour le tableau de bord (`TableauDeBordDTO`) et l'analyse de stock (`AnalyseStockDTO`)
 
 **TableauDeBordDTO** - Agrégation des statistiques :
 
@@ -501,9 +518,87 @@ Les DTOs sont utilisés pour :
 | `totalProduits` | long | Nombre total de produits |
 | `produitsStockBas` | long | Produits avec quantité <= 10 |
 | `produitsEnRupture` | long | Produits avec quantité = 0 |
-| `valeurTotaleStock` | BigDecimal | Somme (prix x quantité) de tous les produits |
+| `valeurTotaleStock` | BigDecimal | Somme (prix × quantité) de tous les produits |
+| `totalCommandes` | long | Nombre total de commandes |
+| `commandesEnAttente` | long | Commandes avec statut EN_ATTENTE |
+| `chiffreAffaires` | BigDecimal | Somme des montants de toutes les commandes |
 | `dernieresCategories` | List\<CategorieDTO\> | 5 dernières catégories créées |
 | `derniersProduits` | List\<ProduitDTO\> | 5 derniers produits créés |
+| `dernieresCommandes` | List\<CommandeDTO\> | 5 dernières commandes passées |
+
+**AnalyseStockDTO** - Analyse avancée du stock :
+
+Le DTO principal contient 4 sous-objets imbriqués :
+
+| Sous-objet | Description |
+|------------|-------------|
+| `indicateursGlobaux` | Indicateurs de performance globaux (KPIs) |
+| `resumeABC` | Résumé de la classification ABC |
+| `analyseParProduit` | Analyse détaillée produit par produit |
+| `tendanceVentes` | Historique mensuel du chiffre d'affaires |
+
+**IndicateursGlobaux** - KPIs du stock :
+
+| KPI | Type | Définition simple |
+|-----|------|-------------------|
+| `totalProduits` | int | Nombre total de produits en stock |
+| `totalCommandes90j` | int | Combien de commandes ont été passées ces 90 derniers jours |
+| `valeurTotaleStock` | BigDecimal | Valeur totale du stock = somme de (prix × quantité) pour chaque produit |
+| `chiffreAffaires90j` | BigDecimal | Total des ventes (en TND) sur les 90 derniers jours |
+| `croissanceMensuelle` | double | Variation en % entre le CA du mois dernier et celui d'avant. Positif = hausse, négatif = baisse |
+| `tauxRotationMoyen` | double | En moyenne, combien de fois le stock a été vendu et renouvelé (sur 90 jours). Plus c'est élevé, mieux c'est |
+| `produitsEnAlerte` | int | Nombre de produits dont le stock actuel est en dessous du point de réapprovisionnement |
+| `produitsEnRupture` | int | Nombre de produits avec un stock = 0 |
+
+**ResumeABC** - Classification ABC (méthode Pareto) :
+
+La méthode ABC classe les produits selon leur contribution au chiffre d'affaires total :
+
+| Champ | Type | Définition simple |
+|-------|------|-------------------|
+| `produitsA` | int | Produits qui génèrent **80%** du CA (les plus importants, à surveiller de près) |
+| `produitsB` | int | Produits qui génèrent les **15%** suivants du CA (importance moyenne) |
+| `produitsC` | int | Produits qui génèrent les **5%** restants du CA (moins critiques) |
+| `pourcentageCA_A` | double | % exact du CA généré par les produits A |
+| `pourcentageCA_B` | double | % exact du CA généré par les produits B |
+| `pourcentageCA_C` | double | % exact du CA généré par les produits C |
+
+**AnalyseProduit** - Analyse par produit :
+
+| Champ | Type | Définition simple |
+|-------|------|-------------------|
+| `produitId` | Long | Identifiant du produit |
+| `produitNom` | String | Nom du produit |
+| `categorieNom` | String | Catégorie du produit |
+| `stockActuel` | int | Quantité actuellement disponible en stock |
+| `totalVendu` | int | Unités vendues sur les 90 derniers jours |
+| `chiffreAffaires` | BigDecimal | Revenus générés par ce produit sur 90 jours |
+| `classificationABC` | String | Classe A, B ou C selon la contribution au CA (voir ci-dessus) |
+| `tauxRotation` | double | Nombre de fois que le stock a été vendu et renouvelé. Ex: 3.0 = vendu 3 fois son stock |
+| `joursStockRestant` | int | Estimation du nombre de jours avant rupture (basé sur la vitesse de vente actuelle) |
+| `pointReapprovisionnement` | int | Seuil en dessous duquel il faut recommander. Prend en compte le délai de livraison (7j) + marge de sécurité (3j) |
+| `previsionDemandeMensuelle` | int | Prévision du nombre d'unités qui seront vendues le mois prochain (moyenne mobile pondérée) |
+| `tendance` | String | Direction des ventes : `HAUSSE` (↑ > +10%), `STABLE` (→), `BAISSE` (↓ > -10%) |
+| `scoreSante` | int | Score de 0 à 100 reflétant la "bonne santé" du produit en stock. Calculé à partir du stock, de la rotation, de la classe ABC, de la tendance et des jours restants |
+| `alerteStock` | boolean | `true` si le stock actuel est en dessous du point de réapprovisionnement |
+
+**Calcul du Score de Santé** (0-100 points) :
+
+| Critère | Points max | Explication |
+|---------|-----------|-------------|
+| Niveau de stock vs point de réappro | 30 pts | Stock >= réappro = 30 pts, sinon proportionnel |
+| Taux de rotation | 25 pts | ≥ 3x = 25 pts, ≥ 2x = 20 pts, ≥ 1x = 15 pts, > 0 = 5 pts |
+| Classification ABC | 20 pts | A = 20 pts, B = 15 pts, C = 10 pts |
+| Tendance des ventes | 15 pts | Hausse = 15 pts, Stable = 10 pts, Baisse = 5 pts |
+| Jours de stock restant | 10 pts | > 30j = 10 pts, > 14j = 7 pts, > 7j = 3 pts |
+
+**TendanceVentes** - Tendance mensuelle :
+
+| Champ | Type | Définition simple |
+|-------|------|-------------------|
+| `periode` | String | Mois au format YYYY-MM (ex: "2026-01") |
+| `chiffreAffaires` | BigDecimal | Total des ventes de ce mois |
+| `nombreCommandes` | long | Nombre de commandes passées ce mois |
 
 #### Gestion des erreurs
 
@@ -564,22 +659,23 @@ http://localhost:4200/
 │   ├── /admin/produits/ajouter         → FormulaireProduitComponent
 │   ├── /admin/produits/modifier/:id    → FormulaireProduitComponent
 │   ├── /admin/commandes        → ListeCommandesComponent (gestion)
-│   └── /admin/commandes/:id    → DetailCommandeComponent (détail + changement statut)
+│   ├── /admin/commandes/:id    → DetailCommandeComponent (détail + changement statut)
+│   └── /admin/analyse-stock    → AnalyseStockComponent (KPIs, ABC, tendances)
 │
 └── /**                   ─── Redirection vers /
 ```
 
 #### Layout Frontoffice (site public)
 
-- **Navbar horizontale** : Logo, liens Accueil / Catalogue / Panier (avec badge compteur), bouton "Administration", **bouton FR/EN**
+- **Navbar horizontale** : Logo, liens Accueil / Catalogue / Panier (avec badge compteur), bouton "Administration", **bouton FR/EN**, **bouton Dark/Light mode** (lune/soleil)
 - **Zone de contenu** : Pages publiques en lecture seule
 - **Footer** : Branding projet + badges technologies
 - **Responsive** : Menu hamburger sur mobile
 
 #### Layout Backoffice (administration)
 
-- **Sidebar fixe** (gauche) : Navigation avec icônes, sections groupées (Principal, Gestion, Actions Rapides), lien "Voir le site" pour retourner au frontoffice
-- **Topbar** (haut) : Breadcrumbs dynamiques, **bouton FR/EN**, horloge en temps réel
+- **Sidebar fixe** (gauche) : Navigation avec icônes, sections groupées (Principal, Gestion, Analyse, Actions Rapides), lien "Voir le site" pour retourner au frontoffice
+- **Topbar** (haut) : Breadcrumbs dynamiques, **bouton FR/EN**, **bouton Dark/Light mode** (lune/soleil), horloge en temps réel
 - **Zone de contenu** : Zone scrollable avec padding et max-width
 - **Responsive** : Sidebar en overlay sur mobile avec bouton hamburger
 
@@ -589,7 +685,7 @@ http://localhost:4200/
 
 | Composant | Route | Description |
 |-----------|-------|-------------|
-| `LayoutFrontofficeComponent` | - | Shell public : navbar horizontale (avec panier badge) + router-outlet + footer |
+| `LayoutFrontofficeComponent` | - | Shell public : navbar horizontale (panier badge, bouton FR/EN, bouton dark/light mode) + router-outlet + footer |
 | `AccueilComponent` | `/` | Page d'accueil : hero section, 3 stats (produits, catégories, valeur stock), grille catégories, 6 derniers produits |
 | `CatalogueComponent` | `/catalogue` | Grille de produits responsive (3/2/1 colonnes), recherche, filtre catégorie, badges stock, bouton "Ajouter au panier" |
 | `DetailProduitComponent` | `/catalogue/:id` | Détail complet : prix, stock, catégorie, description, sélecteur quantité + "Ajouter au panier", produits similaires |
@@ -603,7 +699,7 @@ http://localhost:4200/
 | Composant | Route | Description |
 |-----------|-------|-------------|
 | `LayoutBackofficeComponent` | - | Shell admin : sidebar + topbar + router-outlet + footer |
-| `SidebarComponent` | - | Sidebar de navigation + topbar avec breadcrumbs et horloge |
+| `SidebarComponent` | - | Sidebar de navigation + topbar avec breadcrumbs, bouton FR/EN, bouton dark/light mode et horloge |
 | `TableauDeBordComponent` | `/admin` | Dashboard avec 4 cartes stats, alertes rupture, actions rapides, dernières données |
 | `ListeCategoriesComponent` | `/admin/categories` | Tableau avec recherche, pagination, actions CRUD |
 | `FormulaireCategorieComponent` | `/admin/categories/ajouter` | Formulaire de création de catégorie |
@@ -613,6 +709,7 @@ http://localhost:4200/
 | `FormulaireProduitComponent` | `/admin/produits/modifier/:id` | Formulaire de modification de produit |
 | `ListeCommandesComponent` | `/admin/commandes` | Tableau avec recherche, filtre par statut, pagination, bouton "Voir" pour chaque commande |
 | `DetailCommandeComponent` | `/admin/commandes/:id` | Détail commande : infos client, lignes articles, total + changement de statut (dropdown + bouton "Appliquer") |
+| `AnalyseStockComponent` | `/admin/analyse-stock` | Dashboard d'analyse avancée : 7 KPIs, classification ABC, graphique tendance des ventes, tableau produits avec filtres/tri, scores de santé |
 
 ### 6.4 - Services
 
@@ -623,7 +720,9 @@ http://localhost:4200/
 | `TableauDeBordService` | `obtenirTableauDeBord()` | Appel HTTP unique vers `/api/tableau-de-bord` |
 | `PanierService` | `chargerPanier()`, `ajouterProduit()`, `modifierQuantite()`, `supprimerProduit()`, `viderPanier()` | Appels HTTP vers `/api/panier` + état réactif via `BehaviorSubject` |
 | `CommandeService` | `creerCommande()`, `listerTout()`, `obtenirParId()`, `obtenirParReference()`, `modifierStatut()` | Appels HTTP vers `/api/commandes` |
-| `TraductionService` | `tr()`, `setLang()`, `toggleLang()` | Service i18n FR/EN : dictionnaire centralisé (~350 clés), persistance localStorage |
+| `AnalyseStockService` | `analyserStock()` | Appel HTTP vers `/api/analyse-stock` — retourne les KPIs, ABC, tendances et analyses par produit |
+| `TraductionService` | `tr()`, `setLang()`, `toggleLang()` | Service i18n FR/EN : dictionnaire centralisé (~450 clés), persistance localStorage |
+| `ThemeService` | `toggle()`, `setTheme()`, `isDark`, `isLight` | Gestion du mode sombre/clair : attribut `data-theme` sur `<html>`, persistance localStorage |
 
 ### 6.5 - Environnements
 
@@ -669,24 +768,45 @@ http://localhost:4200/
 - Spinner sur le bouton pendant la soumission
 - Messages d'erreur de l'API affichés à l'utilisateur
 
+**Backoffice - Analyse de Stock** (`/admin/analyse-stock`) :
+- 7 cartes KPI : total produits, commandes (90j), chiffre d'affaires (90j), croissance mensuelle, produits en alerte, produits en rupture, taux de rotation moyen
+- Classification ABC avec barres de progression : catégories A (produits à forte valeur), B (intermédiaire), C (faible valeur) avec pourcentages de chiffre d'affaires
+- Graphique de tendance des ventes sur les 12 derniers mois (barres horizontales responsive)
+- Tableau d'analyse par produit : classification ABC, stock actuel, unités vendues, chiffre d'affaires, taux de rotation, jours de stock restant, point de réapprovisionnement, prévision de demande mensuelle, tendance (hausse/stable/baisse), score de santé (barre de progression colorée)
+- Filtres : par classification ABC (A/B/C), par alerte stock (en alerte / rupture)
+- Tri : par score de santé, chiffre d'affaires, taux de rotation, niveau de stock
+- Légende explicative des indicateurs clés
+- Loading spinner et gestion d'erreurs avec bouton "Réessayer"
+
 **Traduction FR/EN (i18n)** :
 - Bouton pill-shaped avec globe icon (FR | EN) dans la navbar frontoffice et la topbar backoffice
 - **Tous les textes** de l'application traduits : titres, labels, messages, placeholders, validations, alertes, pagination
-- `TraductionService` centralisé avec dictionnaire de ~160 clés organisées par composant
+- `TraductionService` centralisé avec dictionnaire de ~450 clés organisées par composant
 - Persistance du choix de langue dans `localStorage` (survit au rechargement de page)
 - Interpolation de paramètres dynamiques : `{nom}`, `{n}`, etc.
 - Format de date adapté au locale (`fr-FR` / `en-US`) dans la topbar
 - Traductions professionnelles et naturelles (pas de traduction littérale mot-à-mot)
 
+**Mode Sombre / Clair (Dark / Light mode)** :
+- Bouton toggle circulaire (icône lune/soleil) dans la navbar frontoffice et la topbar backoffice
+- `ThemeService` centralisé avec persistance du choix dans `localStorage`
+- Transition fluide entre les thèmes via CSS custom properties (`html[data-theme="dark"]`)
+- **Toutes les pages** adaptées : frontoffice (accueil, catalogue, détail, panier, commande) et backoffice (dashboard, listes, formulaires, commandes, analyse stock)
+- Couleurs adaptées : arrière-plans sombres, textes clairs, bordures subtiles, ombres profondes
+- Composants Bootstrap surchargés : tables, formulaires, modales, badges, pagination, alertes
+- Icône dynamique : lune (mode clair actif) → soleil (mode sombre actif)
+- Indépendant de la langue : le thème et la langue se gèrent séparément
+
 **UI/UX** :
-- Design professionnel avec CSS custom properties (thème cohérent)
+- Design professionnel avec CSS custom properties (thème cohérent, dark/light mode)
 - Styles frontoffice isolés avec préfixe `.fo-*` (pas de conflit avec le backoffice)
-- Animations : fade-in pages, slide-down alertes, animation modale
+- Animations : fade-in pages, slide-down alertes, animation modale, rotation icône thème
 - Badges colorés pour les quantités : vert (> 10), orange (1-10), rouge (0)
 - Modale de confirmation avant chaque suppression
 - Messages de succès/erreur après chaque opération
 - Design responsive (desktop, tablette, mobile) pour les deux parties
 - Bouton de langue avec design moderne (pill shape, backdrop blur, animation de transition)
+- Bouton de thème avec design circulaire et animation de rotation au survol
 
 ---
 
@@ -724,7 +844,7 @@ http://localhost:4200/
 | Colonne | Type | Contrainte |
 |---------|------|------------|
 | `id` | BIGSERIAL | PRIMARY KEY |
-| `session_id` | VARCHAR(255) | NOT NULL, UNIQUE |
+| `session_id` | VARCHAR(100) | NOT NULL, UNIQUE |
 | `date_creation` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
 | `date_modification` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
 
@@ -734,8 +854,9 @@ http://localhost:4200/
 |---------|------|------------|
 | `id` | BIGSERIAL | PRIMARY KEY |
 | `panier_id` | BIGINT | FOREIGN KEY → paniers(id) ON DELETE CASCADE |
-| `produit_id` | BIGINT | FOREIGN KEY → produits(id) ON DELETE CASCADE |
-| `quantite` | INTEGER | NOT NULL, CHECK >= 1 |
+| `produit_id` | BIGINT | FOREIGN KEY → produits(id) |
+| `quantite` | INTEGER | NOT NULL, CHECK > 0 |
+| `date_ajout` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
 | **Contrainte** | | UNIQUE (panier_id, produit_id) |
 
 #### Table `commandes`
@@ -743,14 +864,15 @@ http://localhost:4200/
 | Colonne | Type | Contrainte |
 |---------|------|------------|
 | `id` | BIGSERIAL | PRIMARY KEY |
-| `reference` | VARCHAR(50) | NOT NULL, UNIQUE |
+| `reference` | VARCHAR(20) | NOT NULL, UNIQUE |
 | `nom_client` | VARCHAR(100) | NOT NULL |
-| `email_client` | VARCHAR(255) | - |
+| `email_client` | VARCHAR(150) | - |
 | `telephone_client` | VARCHAR(20) | - |
-| `adresse_livraison` | VARCHAR(1000) | - |
-| `statut` | VARCHAR(20) | NOT NULL, DEFAULT 'EN_ATTENTE' |
-| `montant_total` | DECIMAL(12,2) | NOT NULL |
+| `adresse_livraison` | TEXT | - |
+| `statut` | VARCHAR(30) | NOT NULL, DEFAULT 'EN_ATTENTE' |
+| `montant_total` | DECIMAL(10,2) | NOT NULL |
 | `date_commande` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+| `date_modification` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
 
 #### Table `lignes_commande`
 
@@ -761,8 +883,8 @@ http://localhost:4200/
 | `produit_id` | BIGINT | FOREIGN KEY → produits(id) |
 | `nom_produit` | VARCHAR(100) | NOT NULL (snapshot) |
 | `prix_unitaire` | DECIMAL(10,2) | NOT NULL (snapshot) |
-| `quantite` | INTEGER | NOT NULL |
-| `sous_total` | DECIMAL(12,2) | NOT NULL |
+| `quantite` | INTEGER | NOT NULL, CHECK > 0 |
+| `sous_total` | DECIMAL(10,2) | NOT NULL |
 
 #### Index de performance
 
@@ -956,7 +1078,58 @@ Le fichier `database/init.sql` est fourni à titre de **référence** et contien
 - L'annulation d'une commande (`statut = ANNULEE`) restaure automatiquement le stock des produits
 - Les statuts possibles : `EN_ATTENTE` → `CONFIRMEE` → `EN_PREPARATION` → `EXPEDIEE` → `LIVREE` (ou `ANNULEE` à tout moment)
 
-### 8.6 - Codes de réponse HTTP
+### 8.6 - Analyse Stock (`/api/analyse-stock`)
+
+| Méthode | Endpoint | Description | Réponse |
+|---------|----------|-------------|---------|
+| `GET` | `/api/analyse-stock` | Analyse complète du stock (KPIs, ABC, tendances, prévisions) | 200 + JSON Object |
+
+**Exemple de réponse** :
+```json
+{
+  "indicateursGlobaux": {
+    "totalProduits": 9,
+    "totalCommandes90j": 15,
+    "valeurTotaleStock": 2547100.00,
+    "tauxRotationMoyen": 2.3,
+    "chiffreAffaires90j": 125000.00,
+    "croissanceMensuelle": 12.5,
+    "produitsEnAlerte": 3,
+    "produitsEnRupture": 1
+  },
+  "resumeABC": {
+    "produitsA": 2,
+    "produitsB": 3,
+    "produitsC": 4,
+    "pourcentageCA_A": 65.0,
+    "pourcentageCA_B": 25.0,
+    "pourcentageCA_C": 10.0
+  },
+  "tendanceVentes": [
+    { "periode": "2025-12", "chiffreAffaires": 42000.00, "nombreCommandes": 5 }
+  ],
+  "analyseParProduit": [
+    {
+      "produitId": 1,
+      "produitNom": "Donépézil 10mg",
+      "categorieNom": "Médicaments",
+      "stockActuel": 150,
+      "totalVendu": 45,
+      "joursStockRestant": 100,
+      "chiffreAffaires": 202500.00,
+      "classificationABC": "A",
+      "tauxRotation": 3.2,
+      "alerteStock": false,
+      "scoreSante": 85,
+      "pointReapprovisionnement": 30,
+      "previsionDemandeMensuelle": 15,
+      "tendance": "HAUSSE"
+    }
+  ]
+}
+```
+
+### 8.7 - Codes de réponse HTTP
 
 | Code | Signification | Quand |
 |------|---------------|-------|
@@ -989,6 +1162,7 @@ Le Service Stock intègre **SpringDoc OpenAPI** qui génère automatiquement une
 | **Produits** | CRUD des produits de stock | 6 endpoints |
 | **Panier** | Gestion du panier d'achat par session | 5 endpoints |
 | **Commandes** | Gestion des commandes et statuts | 5 endpoints |
+| **Analyse Stock** | Analyse avancée du stock (KPIs, ABC, tendances) | 1 endpoint |
 
 ### Fonctionnalités Swagger UI
 
@@ -1078,6 +1252,7 @@ ng serve --open
 | http://localhost:4200/admin/produits/modifier/1 | Modifier Produit | Formulaire pré-rempli avec les données existantes |
 | http://localhost:4200/admin/commandes | Commandes | Tableau avec recherche, filtre par statut (6 statuts), pagination, bouton "Voir" |
 | http://localhost:4200/admin/commandes/1 | Détail Commande | Infos client, lignes articles, total + dropdown changement de statut |
+| http://localhost:4200/admin/analyse-stock | Analyse Stock | 7 KPIs, classification ABC, graphique tendances, tableau produits avec filtres |
 
 #### Navigation entre Frontoffice et Backoffice
 
@@ -1114,6 +1289,14 @@ ng serve --open
 24. Naviguer vers `/admin` → le backoffice est aussi en anglais (dashboard, sidebar, commandes, breadcrumbs, formulaires)
 25. Recharger la page → la langue anglaise est conservée (persistance localStorage)
 26. Cliquer **EN → FR** → retour au français immédiat sans rechargement
+27. Cliquer le bouton **lune** (🌙) dans la navbar → l'interface passe en **mode sombre**, l'icône devient un soleil (☀️)
+28. Naviguer entre les pages (catalogue, panier, admin) → le thème sombre est conservé sur toutes les pages
+29. Recharger la page → le mode sombre est conservé (persistance localStorage)
+30. Cliquer le bouton **soleil** (☀️) → retour au mode clair immédiat
+31. Naviguer vers `/admin/analyse-stock` → le dashboard d'analyse s'affiche avec 7 KPIs, classification ABC, graphique de tendance
+32. Filtrer les produits par classification **A** → seuls les produits de catégorie A s'affichent
+33. Changer le tri par **Chiffre d'affaires** → les produits sont triés par CA décroissant
+34. Vérifier les scores de santé → barres de progression colorées (vert ≥ 70, orange ≥ 40, rouge < 40)
 
 ---
 
@@ -1123,7 +1306,7 @@ ng serve --open
 
 #### Page Accueil (`/`)
 
-- Navbar horizontale avec liens Accueil, Catalogue, Administration, **bouton FR/EN** (pill shape)
+- Navbar horizontale avec liens Accueil, Catalogue, Administration, **bouton FR/EN** (pill shape), **bouton dark/light mode** (lune/soleil)
 - Hero section avec gradient, titre du projet et bouton "Parcourir le Catalogue"
 - 3 cartes statistiques : nombre de produits, nombre de catégories, valeur totale du stock (TND)
 - Grille de catégories cliquables avec icône, description et nombre de produits
@@ -1188,7 +1371,7 @@ ng serve --open
 
 #### Page Tableau de Bord (`/admin`)
 
-- Layout backoffice avec sidebar fixe (gauche) et topbar (breadcrumbs + **bouton FR/EN** + horloge)
+- Layout backoffice avec sidebar fixe (gauche) et topbar (breadcrumbs + **bouton FR/EN** + **bouton dark/light mode** + horloge)
 - 4 cartes statistiques : catégories, produits, stock faible (≤ 10), valeur totale stock (TND)
 - Alerte rouge si produits en rupture de stock
 - 3 boutons d'actions rapides : Nouvelle Catégorie, Nouveau Produit, Voir tout le Stock
@@ -1248,10 +1431,32 @@ ng serve --open
 - Messages de succès/erreur après modification
 - Bouton "Retour à la liste"
 
+#### Page Analyse Stock (`/admin/analyse-stock`)
+
+- **Ligne 1** : 4 cartes KPI — total produits, commandes (90 jours), chiffre d'affaires (90j), taux de croissance mensuelle (avec indicateur tendance ↑↓)
+- **Ligne 2** : 3 cartes KPI — produits en alerte, produits en rupture, taux de rotation moyen
+- **Carte Classification ABC** : barres de progression montrant la répartition A/B/C avec nombre de produits et pourcentage du CA pour chaque catégorie
+- **Graphique Tendance des Ventes** : barres horizontales représentant le chiffre d'affaires des 12 derniers mois, responsive et proportionnel
+- **Tableau Analyse par Produit** :
+  - En-tête avec 3 filtres (classification ABC, alerte stock, critère de tri)
+  - Colonnes : produit, classe ABC (badge coloré), stock actuel, unités vendues, CA (TND), rotation, jours restants, point réappro, prévision demande, tendance (↑/→/↓), score de santé (barre de progression)
+  - Lignes colorées : rouge si rupture, orange si alerte
+- **Carte Légende** : explication du taux de rotation, point de réapprovisionnement et score de santé
+
+#### Mode Sombre / Clair (Dark / Light mode)
+
+- **Bouton toggle** circulaire (38px) avec icône Bootstrap : `bi-moon-fill` (lune) en mode clair, `bi-sun-fill` (soleil) en mode sombre
+- Présent dans la **navbar frontoffice** (à côté du bouton FR/EN) et la **topbar backoffice** (entre le bouton FR/EN et l'horloge)
+- **Transition fluide** : `background-color 0.3s ease` sur `<html>` pour une animation douce
+- **Variables CSS dark** : ~20 variables surchargées (`--bg`, `--bg-card`, `--text-primary`, `--border`, `--shadow`, `--sidebar-bg`, etc.)
+- **Composants Bootstrap** surchargés : tables (`--bs-table-bg`), formulaires (`.form-control`), modales, pagination, alertes, badges, dropdowns
+- **Persistance** : choix stocké dans `localStorage`, appliqué dès le chargement initial
+- **Toutes les pages** adaptées : frontoffice et backoffice, incluant les formulaires, tableaux, graphiques et cartes
+
 ### Swagger UI (`/api/swagger-ui.html`)
 
 - Documentation interactive de tous les endpoints
-- 3 groupes : Tableau de Bord, Catégories, Produits
+- 6 groupes : Tableau de Bord, Catégories, Produits, Panier, Commandes, Analyse Stock
 - Bouton "Try it out" pour tester directement
 - Visualisation des modèles de données et contraintes de validation
 

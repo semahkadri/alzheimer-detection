@@ -244,7 +244,7 @@ Le navigateur s'ouvrira automatiquement sur : http://localhost:4200
 
 Ouvrir **http://localhost:8081/api/swagger-ui.html** dans le navigateur. Swagger UI permet de :
 
-- Visualiser tous les endpoints groupés par catégorie (Tableau de Bord, Catégories, Produits)
+- Visualiser tous les endpoints groupés par catégorie (Tableau de Bord, Catégories, Produits, Panier, Commandes, Analyse Stock)
 - Cliquer **"Try it out"** sur n'importe quel endpoint pour le tester
 - Voir la structure JSON attendue pour chaque requête
 - Voir les codes de réponse possibles et les contraintes de validation
@@ -402,6 +402,8 @@ Réponse attendue : **400 Bad Request**.
 | OpenAPI JSON | 8081 | http://localhost:8081/api/v3/api-docs |
 | **Frontend (Frontoffice)** | **4200** | **http://localhost:4200** |
 | **Frontend (Backoffice)** | **4200** | **http://localhost:4200/admin** |
+| Analyse Stock (API) | 8081 | http://localhost:8081/api/analyse-stock |
+| Analyse Stock (UI) | 4200 | http://localhost:4200/admin/analyse-stock |
 | PostgreSQL | 5432 | localhost:5432 |
 
 ## Ordre de démarrage obligatoire
@@ -450,8 +452,11 @@ Après chaque étape, vérifiez que tout est OK avant de passer à la suivante :
     [ ] http://localhost:4200 → Page d'accueil frontoffice (hero, stats, catégories)
     [ ] Cliquer "Catalogue" → grille produits avec recherche, filtres, tri, pagination
     [ ] Cliquer bouton FR/EN → l'interface bascule en anglais
+    [ ] Cliquer bouton 🌙 (lune) → l'interface passe en mode sombre
+    [ ] Recharger la page → le mode sombre est conservé (localStorage)
     [ ] http://localhost:4200/admin → Backoffice avec sidebar et dashboard
-    [ ] La sidebar affiche "Tableau de Bord", "Catégories", "Produits"
+    [ ] La sidebar affiche "Tableau de Bord", "Catégories", "Produits", "Analyse Stock"
+    [ ] http://localhost:4200/admin/analyse-stock → Dashboard analyse (KPIs, ABC, tendances)
 
 [ ] Étape 7 : Tests CRUD OK (via Swagger UI ou Postman)
     [ ] Créer une catégorie → 201
@@ -483,14 +488,18 @@ Ce scénario vous guide à tester **toutes les fonctionnalités** du projet de b
    - Ou une liste de catégories si vous en avez déjà créé
 
 3. Ouvrir **http://localhost:8081/api/swagger-ui.html**
-   - Vous devez voir l'interface **Swagger UI** avec 3 groupes d'API :
+   - Vous devez voir l'interface **Swagger UI** avec 6 groupes d'API :
      - **Tableau de Bord** (1 endpoint)
      - **Catégories** (5 endpoints)
      - **Produits** (6 endpoints)
+     - **Panier** (5 endpoints)
+     - **Commandes** (5 endpoints)
+     - **Analyse Stock** (1 endpoint)
 
 4. Ouvrir **http://localhost:4200**
-   - L'interface backoffice Angular s'affiche avec la sidebar à gauche
-   - Le Dashboard affiche les 4 cartes de statistiques
+   - La page d'accueil frontoffice s'affiche avec hero section, stats et catégories
+   - La navbar affiche les boutons FR/EN et dark/light mode (lune/soleil)
+   - Ouvrir http://localhost:4200/admin → Backoffice avec sidebar, dashboard et 4 cartes stats
 
 ### 9.2 - Test complet avec Postman (étape par étape)
 
@@ -694,6 +703,9 @@ Ouvrir **Postman** et suivre ces étapes dans l'ordre :
 | 16 | Frontoffice | Navigateur | http://localhost:4200 | Accueil + Catalogue + Détail OK |
 | 17 | Backoffice | Navigateur | http://localhost:4200/admin | Dashboard + CRUD visuel OK |
 | 18 | Traduction FR/EN | Navigateur | Bouton FR/EN | L'interface bascule en anglais/français |
+| 19 | Mode sombre | Navigateur | Bouton 🌙/☀️ | L'interface passe en dark/light mode (persistant) |
+| 20 | Analyse Stock | Navigateur | http://localhost:4200/admin/analyse-stock | KPIs, ABC, tendances, tableau produits |
+| 21 | Analyse Stock API | GET | /api/analyse-stock | 200 + JSON avec indicateurs, ABC, tendances |
 
 ---
 
