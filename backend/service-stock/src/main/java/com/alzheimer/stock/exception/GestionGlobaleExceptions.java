@@ -6,6 +6,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -13,6 +14,15 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GestionGlobaleExceptions {
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> gererTailleFichierDepassee(MaxUploadSizeExceededException ex) {
+        Map<String, Object> erreur = new HashMap<>();
+        erreur.put("timestamp", LocalDateTime.now());
+        erreur.put("message", "Le fichier dépasse la taille maximale autorisée (5 Mo).");
+        erreur.put("statut", HttpStatus.BAD_REQUEST.value());
+        return new ResponseEntity<>(erreur, HttpStatus.BAD_REQUEST);
+    }
 
     @ExceptionHandler(ResourceIntrouvableException.class)
     public ResponseEntity<Map<String, Object>> gererResourceIntrouvable(ResourceIntrouvableException ex) {
