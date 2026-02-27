@@ -24,7 +24,8 @@ import { TraductionService } from '../../../services/traduction.service';
         <!-- Product Detail -->
         <div class="fo-product-detail">
           <div class="fo-product-detail-img">
-            <i class="bi bi-box-seam"></i>
+            <img *ngIf="produit.imageUrl" [src]="produit.imageUrl" [alt]="produit.nom" style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;">
+            <i *ngIf="!produit.imageUrl" class="bi bi-box-seam"></i>
           </div>
           <div class="fo-product-detail-info">
             <span class="fo-product-card-category">{{ produit.categorieNom }}</span>
@@ -39,15 +40,11 @@ import { TraductionService } from '../../../services/traduction.service';
               <div class="fo-product-detail-stock">
                 <span class="label">{{ t.tr('detail.disponibilite') }}</span>
                 <span class="fo-product-stock fo-product-stock-lg"
-                      [class.in-stock]="produit.quantite > 10"
-                      [class.low-stock]="produit.quantite > 0 && produit.quantite <= 10"
+                      [class.in-stock]="produit.quantite > 0"
                       [class.out-of-stock]="produit.quantite === 0">
-                  <i class="bi" [class.bi-check-circle-fill]="produit.quantite > 10"
-                     [class.bi-exclamation-triangle-fill]="produit.quantite > 0 && produit.quantite <= 10"
+                  <i class="bi" [class.bi-check-circle-fill]="produit.quantite > 0"
                      [class.bi-x-circle-fill]="produit.quantite === 0"></i>
-                  {{ produit.quantite > 10 ? t.tr('detail.enStockUnites', {n: produit.quantite}) :
-                     produit.quantite > 0 ? t.tr('detail.faibleUnites', {n: produit.quantite}) :
-                     t.tr('detail.ruptureStock') }}
+                  {{ produit.quantite > 0 ? t.tr('common.enStock') : t.tr('detail.ruptureStock') }}
                 </span>
               </div>
               <div class="fo-product-detail-category">
@@ -101,7 +98,8 @@ import { TraductionService } from '../../../services/traduction.service';
           <div class="fo-product-grid">
             <a *ngFor="let p of relatedProducts" [routerLink]="['/catalogue', p.id]" class="fo-product-card">
               <div class="fo-product-card-img">
-                <i class="bi bi-box-seam"></i>
+                <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.nom" style="width: 100%; height: 100%; object-fit: cover;">
+                <i *ngIf="!p.imageUrl" class="bi bi-box-seam"></i>
               </div>
               <div class="fo-product-card-body">
                 <span class="fo-product-card-category">{{ p.categorieNom }}</span>
@@ -109,10 +107,9 @@ import { TraductionService } from '../../../services/traduction.service';
                 <div class="fo-product-card-footer">
                   <span class="fo-product-price">{{ p.prix | number:'1.2-2' }} TND</span>
                   <span class="fo-product-stock"
-                        [class.in-stock]="p.quantite > 10"
-                        [class.low-stock]="p.quantite > 0 && p.quantite <= 10"
+                        [class.in-stock]="p.quantite > 0"
                         [class.out-of-stock]="p.quantite === 0">
-                    {{ p.quantite > 10 ? t.tr('common.enStock') : p.quantite > 0 ? t.tr('common.stockFaible') : t.tr('common.rupture') }}
+                    {{ p.quantite > 0 ? t.tr('common.enStock') : t.tr('common.rupture') }}
                   </span>
                 </div>
               </div>

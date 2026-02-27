@@ -108,7 +108,14 @@ import { TraductionService } from '../../../services/traduction.service';
                   </tr>
                   <tr *ngFor="let produit of produitsPage">
                     <td><span class="text-muted">#{{ produit.id }}</span></td>
-                    <td class="fw-semibold">{{ produit.nom }}</td>
+                    <td class="fw-semibold">
+                      <div class="d-flex align-items-center gap-2">
+                        <img *ngIf="produit.imageUrl" [src]="produit.imageUrl" [alt]="produit.nom"
+                             style="width: 36px; height: 36px; object-fit: cover; border-radius: 6px;">
+                        <i *ngIf="!produit.imageUrl" class="bi bi-image text-muted" style="font-size: 1.2rem;"></i>
+                        {{ produit.nom }}
+                      </div>
+                    </td>
                     <td class="text-muted" style="max-width: 200px;">
                       {{ produit.description | slice:0:60 }}{{ (produit.description.length || 0) > 60 ? '...' : '' }}
                     </td>

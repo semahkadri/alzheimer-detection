@@ -88,7 +88,8 @@ import { TraductionService } from '../../../services/traduction.service';
         <div class="fo-product-grid" *ngIf="!loading && pagedProducts.length > 0">
           <a *ngFor="let prod of pagedProducts" [routerLink]="['/catalogue', prod.id]" class="fo-product-card">
             <div class="fo-product-card-img">
-              <i class="bi bi-box-seam"></i>
+              <img *ngIf="prod.imageUrl" [src]="prod.imageUrl" [alt]="prod.nom" style="width: 100%; height: 100%; object-fit: cover;">
+              <i *ngIf="!prod.imageUrl" class="bi bi-box-seam"></i>
             </div>
             <div class="fo-product-card-body">
               <span class="fo-product-card-category">{{ prod.categorieNom }}</span>
@@ -97,10 +98,9 @@ import { TraductionService } from '../../../services/traduction.service';
               <div class="fo-product-card-footer">
                 <span class="fo-product-price">{{ prod.prix | number:'1.2-2' }} TND</span>
                 <span class="fo-product-stock"
-                      [class.in-stock]="prod.quantite > 10"
-                      [class.low-stock]="prod.quantite > 0 && prod.quantite <= 10"
+                      [class.in-stock]="prod.quantite > 0"
                       [class.out-of-stock]="prod.quantite === 0">
-                  {{ prod.quantite > 10 ? t.tr('common.enStock') : prod.quantite > 0 ? t.tr('common.stockFaible') : t.tr('common.rupture') }}
+                  {{ prod.quantite > 0 ? t.tr('common.enStock') : t.tr('common.rupture') }}
                 </span>
               </div>
               <button *ngIf="prod.quantite > 0" class="fo-add-cart-btn mt-2"
@@ -111,6 +111,9 @@ import { TraductionService } from '../../../services/traduction.service';
                 <i *ngIf="ajoutOk === prod.id" class="bi bi-check-lg me-1"></i>
                 {{ ajoutOk === prod.id ? t.tr('panier.ajouterSuccess') : t.tr('catalogue.ajouterPanier') }}
               </button>
+              <span *ngIf="prod.quantite === 0" class="fo-out-of-stock-label mt-2" style="color: var(--danger, #dc3545); font-weight: 600; font-size: 0.85rem;">
+                <i class="bi bi-x-circle me-1"></i>{{ t.tr('common.rupture') }}
+              </span>
             </div>
           </a>
         </div>
@@ -229,7 +232,7 @@ export class CatalogueComponent implements OnInit {
       const matchCategory = !this.selectedCategory ||
         p.categorieId === this.selectedCategory;
       let matchStock = true;
-      if (this.selectedStock === 'en-stock') matchStock = p.quantite > 10;
+      if (this.selectedStock === 'en-stock') matchStock = p.quantite > 0;
       else if (this.selectedStock === 'faible') matchStock = p.quantite > 0 && p.quantite <= 10;
       else if (this.selectedStock === 'rupture') matchStock = p.quantite === 0;
       return matchSearch && matchCategory && matchStock;

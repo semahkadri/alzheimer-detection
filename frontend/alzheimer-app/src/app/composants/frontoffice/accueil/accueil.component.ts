@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TableauDeBordService } from '../../../services/tableau-de-bord.service';
+import { CategorieService } from '../../../services/categorie.service';
 import { TableauDeBord } from '../../../modeles/tableau-de-bord.model';
 import { Categorie } from '../../../modeles/categorie.model';
 import { Produit } from '../../../modeles/produit.model';
@@ -42,13 +43,6 @@ import { TraductionService } from '../../../services/traduction.service';
             <div class="fo-stat-number">{{ dashboard.totalCategories }}</div>
             <div class="fo-stat-label">{{ t.tr('accueil.statCategories') }}</div>
           </div>
-          <div class="fo-stat-card">
-            <div class="fo-stat-icon" style="background: var(--success-light); color: var(--success);">
-              <i class="bi bi-currency-exchange"></i>
-            </div>
-            <div class="fo-stat-number">{{ dashboard.valeurTotaleStock | number:'1.0-0' }}</div>
-            <div class="fo-stat-label">{{ t.tr('accueil.statValeur') }}</div>
-          </div>
         </div>
       </div>
     </section>
@@ -80,7 +74,8 @@ import { TraductionService } from '../../../services/traduction.service';
         <div class="fo-product-grid">
           <a *ngFor="let prod of recentProducts" [routerLink]="['/catalogue', prod.id]" class="fo-product-card">
             <div class="fo-product-card-img">
-              <i class="bi bi-box-seam"></i>
+              <img *ngIf="prod.imageUrl" [src]="prod.imageUrl" [alt]="prod.nom" style="width: 100%; height: 100%; object-fit: cover;">
+              <i *ngIf="!prod.imageUrl" class="bi bi-box-seam"></i>
             </div>
             <div class="fo-product-card-body">
               <span class="fo-product-card-category">{{ prod.categorieNom }}</span>
@@ -89,10 +84,9 @@ import { TraductionService } from '../../../services/traduction.service';
               <div class="fo-product-card-footer">
                 <span class="fo-product-price">{{ prod.prix | number:'1.2-2' }} TND</span>
                 <span class="fo-product-stock"
-                      [class.in-stock]="prod.quantite > 10"
-                      [class.low-stock]="prod.quantite > 0 && prod.quantite <= 10"
+                      [class.in-stock]="prod.quantite > 0"
                       [class.out-of-stock]="prod.quantite === 0">
-                  {{ prod.quantite > 10 ? t.tr('common.enStock') : prod.quantite > 0 ? t.tr('common.stockFaible') : t.tr('common.rupture') }}
+                  {{ prod.quantite > 0 ? t.tr('common.enStock') : t.tr('common.rupture') }}
                 </span>
               </div>
             </div>
@@ -117,14 +111,18 @@ export class AccueilComponent implements OnInit {
 
   constructor(
     private dashboardService: TableauDeBordService,
+    private categorieService: CategorieService,
     public t: TraductionService
   ) {}
 
   ngOnInit(): void {
+    // Load ALL categories (not just the 5 from dashboard)
+    this.categorieService.listerTout().subscribe({
+      next: (cats) => this.categories = cats
+    });
     this.dashboardService.obtenirTableauDeBord().subscribe({
       next: (data) => {
         this.dashboard = data;
-        this.categories = data.dernieresCategories || [];
         this.recentProducts = (data.derniersProduits || []).slice(0, 6);
         this.loading = false;
       },
