@@ -22,6 +22,7 @@ public class LignePanierDTO {
     private String produitNom;
     private BigDecimal produitPrix;
     private Integer produitQuantiteStock;
+    private String produitImageUrl;
     private String categorieNom;
 
     @NotNull(message = "La quantité est obligatoire")

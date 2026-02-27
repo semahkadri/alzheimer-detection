@@ -18,6 +18,8 @@ public class PanierDTO {
     private List<LignePanierDTO> lignes;
     private int nombreArticles;
     private BigDecimal montantTotal;
+    private LocalDateTime derniereActivite;
+    private LocalDateTime expireA;
     private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
 }

@@ -4,6 +4,7 @@ export interface Produit {
   description: string;
   prix: number;
   quantite: number;
+  imageUrl?: string;
   categorieId: number;
   categorieNom?: string;
   dateCreation?: string;

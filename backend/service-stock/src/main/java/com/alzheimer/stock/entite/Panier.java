@@ -29,6 +29,9 @@ public class Panier {
     @Builder.Default
     private List<LignePanier> lignes = new ArrayList<>();
 
+    @Column(name = "derniere_activite")
+    private LocalDateTime derniereActivite;
+
     @CreationTimestamp
     @Column(name = "date_creation", updatable = false)
     private LocalDateTime dateCreation;
@@ -36,4 +39,11 @@ public class Panier {
     @UpdateTimestamp
     @Column(name = "date_modification")
     private LocalDateTime dateModification;
+
+    @PrePersist
+    private void initActivite() {
+        if (derniereActivite == null) {
+            derniereActivite = LocalDateTime.now();
+        }
+    }
 }

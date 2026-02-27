@@ -4,6 +4,7 @@ export interface LignePanier {
   produitNom?: string;
   produitPrix?: number;
   produitQuantiteStock?: number;
+  produitImageUrl?: string;
   categorieNom?: string;
   quantite: number;
   sousTotal?: number;
@@ -16,6 +17,8 @@ export interface Panier {
   lignes: LignePanier[];
   nombreArticles: number;
   montantTotal: number;
+  derniereActivite?: string;
+  expireA?: string;
   dateCreation?: string;
   dateModification?: string;
 }
