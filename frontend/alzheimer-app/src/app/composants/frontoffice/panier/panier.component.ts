@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PanierService } from '../../../services/panier.service';
@@ -41,6 +41,41 @@ import { Panier, LignePanier } from '../../../modeles/panier.model';
 
         <!-- Cart Content -->
         <div *ngIf="!chargement && panier && panier.lignes.length > 0">
+
+          <!-- Expiration Timer Banner -->
+          <div *ngIf="minutesRestantes >= 0" class="d-flex align-items-center mb-4"
+               [style.background]="minutesRestantes <= 5 ? '#fff0f0' : '#fff8eb'"
+               [style.border]="minutesRestantes <= 5 ? '1px solid #ffcdd2' : '1px solid #ffe0b2'"
+               style="border-radius: 14px; padding: 16px 20px; gap: 16px;">
+            <div [style.background]="minutesRestantes <= 5 ? '#ffebee' : '#fff3e0'"
+                 style="width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <i class="bi" [ngClass]="minutesRestantes === 0 && secondesRestantes === 0 ? 'bi-exclamation-triangle-fill' : 'bi-clock-history'"
+                 [style.color]="minutesRestantes <= 5 ? '#d32f2f' : '#e65100'"
+                 style="font-size: 1.4rem;"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div *ngIf="minutesRestantes > 0" style="font-weight: 600; font-size: 0.95rem;"
+                   [style.color]="minutesRestantes <= 5 ? '#c62828' : '#e65100'">
+                {{ t.tr('panier.expireDans') }}
+                <span style="font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem;">
+                  {{ minutesRestantes < 10 ? '0' + minutesRestantes : minutesRestantes }}:{{ secondesRestantes < 10 ? '0' + secondesRestantes : secondesRestantes }}
+                </span>
+              </div>
+              <div *ngIf="minutesRestantes === 0 && secondesRestantes > 0" style="font-weight: 600; font-size: 0.95rem; color: #c62828;">
+                {{ t.tr('panier.expireDans') }}
+                <span style="font-variant-numeric: tabular-nums; font-weight: 700; font-size: 1.05rem;">
+                  00:{{ secondesRestantes < 10 ? '0' + secondesRestantes : secondesRestantes }}
+                </span>
+              </div>
+              <div *ngIf="minutesRestantes === 0 && secondesRestantes === 0" style="font-weight: 600; font-size: 0.95rem; color: #c62828;">
+                {{ t.tr('panier.expire') }}
+              </div>
+              <div style="font-size: 0.82rem; color: #78909c; margin-top: 3px;">
+                {{ t.tr('panier.expireInfo') }}
+              </div>
+            </div>
+          </div>
+
           <div class="row g-4">
             <!-- Cart Items -->
             <div class="col-lg-8">
@@ -58,9 +93,10 @@ import { Panier, LignePanier } from '../../../modeles/panier.model';
                   <div *ngFor="let ligne of panier.lignes; let last = last"
                        class="d-flex align-items-center p-4"
                        [style.border-bottom]="!last ? '1px solid var(--border)' : 'none'">
-                    <!-- Product Icon -->
-                    <div class="me-3" style="width: 60px; height: 60px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                      <i class="bi bi-box-seam" style="font-size: 1.4rem; color: var(--primary);"></i>
+                    <!-- Product Image -->
+                    <div class="me-3" style="width: 60px; height: 60px; background: var(--primary-light); border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                      <img *ngIf="ligne.produitImageUrl" [src]="ligne.produitImageUrl" [alt]="ligne.produitNom" style="width: 100%; height: 100%; object-fit: cover;">
+                      <i *ngIf="!ligne.produitImageUrl" class="bi bi-box-seam" style="font-size: 1.4rem; color: var(--primary);"></i>
                     </div>
                     <!-- Product Info -->
                     <div class="flex-grow-1">
@@ -68,9 +104,6 @@ import { Panier, LignePanier } from '../../../modeles/panier.model';
                       <small class="text-muted">{{ ligne.categorieNom }}</small>
                       <div class="mt-1">
                         <span class="fw-semibold" style="color: var(--primary);">{{ ligne.produitPrix | number:'1.2-2' }} TND</span>
-                        <span class="text-muted ms-2" style="font-size: 0.78rem;">
-                          ({{ t.tr('panier.stock') }}: {{ ligne.produitQuantiteStock }})
-                        </span>
                       </div>
                     </div>
                     <!-- Quantity Controls -->
@@ -146,11 +179,16 @@ import { Panier, LignePanier } from '../../../modeles/panier.model';
     </div>
   `
 })
-export class PanierComponent implements OnInit {
+export class PanierComponent implements OnInit, OnDestroy {
   panier: Panier | null = null;
   chargement = true;
   enCours = false;
   erreur = '';
+
+  // Timer
+  minutesRestantes = -1;
+  secondesRestantes = 0;
+  private timerInterval: any = null;
 
   constructor(
     private panierService: PanierService,
@@ -161,12 +199,17 @@ export class PanierComponent implements OnInit {
     this.chargerPanier();
   }
 
+  ngOnDestroy(): void {
+    this.stopTimer();
+  }
+
   chargerPanier(): void {
     this.chargement = true;
     this.panierService.chargerPanier().subscribe({
       next: (data) => {
         this.panier = data;
         this.chargement = false;
+        this.startTimer();
       },
       error: () => {
         this.chargement = false;
@@ -183,6 +226,7 @@ export class PanierComponent implements OnInit {
       next: (data) => {
         this.panier = data;
         this.enCours = false;
+        this.startTimer();
       },
       error: (err) => {
         this.erreur = err.error?.message || this.t.tr('panier.erreurModif');
@@ -198,6 +242,7 @@ export class PanierComponent implements OnInit {
       next: (data) => {
         this.panier = data;
         this.enCours = false;
+        this.startTimer();
       },
       error: () => {
         this.erreur = this.t.tr('panier.erreurSupp');
@@ -213,11 +258,51 @@ export class PanierComponent implements OnInit {
       next: () => {
         this.panier = { sessionId: '', lignes: [], nombreArticles: 0, montantTotal: 0 };
         this.enCours = false;
+        this.stopTimer();
+        this.minutesRestantes = -1;
       },
       error: () => {
         this.erreur = this.t.tr('panier.erreurVider');
         this.enCours = false;
       }
     });
+  }
+
+  // ─── Timer logic ───────────────────────────────────
+
+  private startTimer(): void {
+    this.stopTimer();
+
+    if (!this.panier?.expireA || this.panier.lignes.length === 0) {
+      this.minutesRestantes = -1;
+      return;
+    }
+
+    this.updateCountdown();
+    this.timerInterval = setInterval(() => this.updateCountdown(), 1000);
+  }
+
+  private stopTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
+
+  private updateCountdown(): void {
+    if (!this.panier?.expireA) return;
+
+    const expireAt = new Date(this.panier.expireA).getTime();
+    const now = Date.now();
+    const diff = Math.max(0, expireAt - now);
+
+    this.minutesRestantes = Math.floor(diff / 60000);
+    this.secondesRestantes = Math.floor((diff % 60000) / 1000);
+
+    if (diff <= 0) {
+      this.stopTimer();
+      // Reload cart - backend will return empty
+      this.chargerPanier();
+    }
   }
 }

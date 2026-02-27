@@ -10,35 +10,46 @@ import com.alzheimer.stock.repository.LignePanierRepository;
 import com.alzheimer.stock.repository.PanierRepository;
 import com.alzheimer.stock.repository.ProduitRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class PanierServiceImpl implements PanierService {
+
+    private static final int EXPIRATION_MINUTES = 20;
 
     private final PanierRepository panierRepository;
     private final LignePanierRepository lignePanierRepository;
     private final ProduitRepository produitRepository;
 
     @Override
-    @Transactional(readOnly = true)
     public PanierDTO obtenirPanier(String sessionId) {
         Panier panier = panierRepository.findBySessionId(sessionId)
                 .orElse(null);
+
         if (panier == null) {
-            return PanierDTO.builder()
-                    .sessionId(sessionId)
-                    .lignes(List.of())
-                    .nombreArticles(0)
-                    .montantTotal(BigDecimal.ZERO)
-                    .build();
+            return panierVide(sessionId);
         }
+
+        // Check expiration: if last activity > 20 min ago, clear the cart
+        if (estExpire(panier)) {
+            log.info("Panier session={} expiré après {} minutes d'inactivité, vidage automatique",
+                    sessionId, EXPIRATION_MINUTES);
+            panier.getLignes().clear();
+            panier.setDerniereActivite(LocalDateTime.now());
+            panierRepository.save(panier);
+            return panierVide(sessionId);
+        }
+
         return convertirEnDTO(panier);
     }
 
@@ -53,9 +64,18 @@ public class PanierServiceImpl implements PanierService {
 
         Panier panier = panierRepository.findBySessionId(sessionId)
                 .orElseGet(() -> {
-                    Panier nouveau = Panier.builder().sessionId(sessionId).build();
+                    Panier nouveau = Panier.builder()
+                            .sessionId(sessionId)
+                            .derniereActivite(LocalDateTime.now())
+                            .build();
                     return panierRepository.save(nouveau);
                 });
+
+        // If cart was expired, clear it first then proceed
+        if (estExpire(panier)) {
+            panier.getLignes().clear();
+            panierRepository.saveAndFlush(panier);
+        }
 
         LignePanier lignePanier = lignePanierRepository
                 .findByPanierIdAndProduitId(panier.getId(), produitId)
@@ -84,6 +104,9 @@ public class PanierServiceImpl implements PanierService {
             lignePanierRepository.save(nouvelle);
         }
 
+        // Reset expiration timer
+        toucherPanier(panier);
+
         return obtenirPanier(sessionId);
     }
 
@@ -91,6 +114,13 @@ public class PanierServiceImpl implements PanierService {
     public PanierDTO modifierQuantite(String sessionId, Long produitId, int quantite) {
         Panier panier = panierRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceIntrouvableException("Panier", "sessionId", sessionId));
+
+        if (estExpire(panier)) {
+            panier.getLignes().clear();
+            panier.setDerniereActivite(LocalDateTime.now());
+            panierRepository.save(panier);
+            return panierVide(sessionId);
+        }
 
         LignePanier ligne = lignePanierRepository
                 .findByPanierIdAndProduitId(panier.getId(), produitId)
@@ -110,13 +140,23 @@ public class PanierServiceImpl implements PanierService {
             lignePanierRepository.save(ligne);
         }
 
-        return convertirEnDTO(panier);
+        // Reset expiration timer
+        toucherPanier(panier);
+
+        return obtenirPanier(sessionId);
     }
 
     @Override
     public PanierDTO supprimerProduit(String sessionId, Long produitId) {
         Panier panier = panierRepository.findBySessionId(sessionId)
                 .orElseThrow(() -> new ResourceIntrouvableException("Panier", "sessionId", sessionId));
+
+        if (estExpire(panier)) {
+            panier.getLignes().clear();
+            panier.setDerniereActivite(LocalDateTime.now());
+            panierRepository.save(panier);
+            return panierVide(sessionId);
+        }
 
         boolean removed = panier.getLignes().removeIf(
             l -> l.getProduit().getId().equals(produitId));
@@ -126,15 +166,62 @@ public class PanierServiceImpl implements PanierService {
         }
 
         panierRepository.saveAndFlush(panier);
-        return convertirEnDTO(panier);
+
+        // Reset expiration timer
+        toucherPanier(panier);
+
+        return obtenirPanier(sessionId);
     }
 
     @Override
     public void viderPanier(String sessionId) {
         panierRepository.findBySessionId(sessionId).ifPresent(panier -> {
             panier.getLignes().clear();
+            panier.setDerniereActivite(LocalDateTime.now());
             panierRepository.save(panier);
         });
+    }
+
+    /**
+     * Called by scheduled task to clean all expired carts.
+     */
+    public void nettoyerPaniersExpires() {
+        LocalDateTime seuil = LocalDateTime.now().minusMinutes(EXPIRATION_MINUTES);
+        List<Panier> expires = panierRepository.findExpiredPaniersWithItems(seuil);
+
+        if (!expires.isEmpty()) {
+            log.info("Nettoyage automatique : {} panier(s) expiré(s)", expires.size());
+            for (Panier panier : expires) {
+                panier.getLignes().clear();
+                panier.setDerniereActivite(LocalDateTime.now());
+                panierRepository.save(panier);
+            }
+        }
+    }
+
+    // ─── Private helpers ─────────────────────────────────────────
+
+    private boolean estExpire(Panier panier) {
+        if (panier.getDerniereActivite() == null) {
+            return false;
+        }
+        return panier.getDerniereActivite()
+                .plusMinutes(EXPIRATION_MINUTES)
+                .isBefore(LocalDateTime.now());
+    }
+
+    private void toucherPanier(Panier panier) {
+        panier.setDerniereActivite(LocalDateTime.now());
+        panierRepository.save(panier);
+    }
+
+    private PanierDTO panierVide(String sessionId) {
+        return PanierDTO.builder()
+                .sessionId(sessionId)
+                .lignes(List.of())
+                .nombreArticles(0)
+                .montantTotal(BigDecimal.ZERO)
+                .build();
     }
 
     private PanierDTO convertirEnDTO(Panier panier) {
@@ -150,12 +237,18 @@ public class PanierServiceImpl implements PanierService {
                 .map(LignePanierDTO::getSousTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        LocalDateTime expireA = panier.getDerniereActivite() != null
+                ? panier.getDerniereActivite().plusMinutes(EXPIRATION_MINUTES)
+                : null;
+
         return PanierDTO.builder()
                 .id(panier.getId())
                 .sessionId(panier.getSessionId())
                 .lignes(lignesDTO)
                 .nombreArticles(nombreArticles)
                 .montantTotal(montantTotal)
+                .derniereActivite(panier.getDerniereActivite())
+                .expireA(expireA)
                 .dateCreation(panier.getDateCreation())
                 .dateModification(panier.getDateModification())
                 .build();
@@ -171,6 +264,7 @@ public class PanierServiceImpl implements PanierService {
                 .produitNom(produit.getNom())
                 .produitPrix(produit.getPrix())
                 .produitQuantiteStock(produit.getQuantite())
+                .produitImageUrl(produit.getImageUrl())
                 .categorieNom(produit.getCategorie().getNom())
                 .quantite(ligne.getQuantite())
                 .sousTotal(sousTotal)
