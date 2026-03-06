@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -41,6 +42,12 @@ public class Produit {
 
     @Column(name = "en_promo")
     private Boolean enPromo = false;
+
+    @Column(name = "date_expiration")
+    private LocalDate dateExpiration;
+
+    @Column(name = "numero_lot", length = 100)
+    private String numeroLot;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id", nullable = false)

@@ -189,6 +189,75 @@ import { TraductionService } from '../../services/traduction.service';
           </div>
         </div>
 
+        <!-- Smart Alerts Panel -->
+        <div *ngIf="alertesExpiration.length > 0 || alertesReapprovisionnement.length > 0" class="row g-3 mb-4">
+          <!-- Expiry Alerts -->
+          <div class="col-lg-6" *ngIf="alertesExpiration.length > 0">
+            <div class="card fo-alert-card fo-alert-card-expiry">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                  <i class="bi bi-calendar-x-fill me-2" style="color: var(--danger, #dc3545);"></i>{{ t.tr('tdb.alerteExpiration') }}
+                </h6>
+                <div class="d-flex gap-2">
+                  <span *ngIf="produitsExpires > 0" class="badge bg-danger">{{ produitsExpires }} {{ t.tr('tdb.produitsExpires') | lowercase }}</span>
+                  <span *ngIf="produitsExpirantBientot > 0" class="badge bg-warning text-dark">{{ produitsExpirantBientot }} {{ t.tr('tdb.expirantBientot') | lowercase }}</span>
+                </div>
+              </div>
+              <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                  <div *ngFor="let prod of alertesExpiration" class="list-group-item d-flex justify-content-between align-items-center px-4 py-3">
+                    <div>
+                      <span class="fw-semibold">{{ prod.nom }}</span>
+                      <small class="d-block text-muted">{{ prod.categorieNom }}
+                        <span *ngIf="prod.numeroLot"> &middot; {{ t.tr('tdb.lotLabel') }} {{ prod.numeroLot }}</span>
+                      </small>
+                    </div>
+                    <div class="text-end">
+                      <span *ngIf="prod.joursAvantExpiration !== undefined && prod.joursAvantExpiration < 0"
+                            class="badge bg-danger">{{ t.tr('tdb.dejExpire') }}</span>
+                      <span *ngIf="prod.joursAvantExpiration !== undefined && prod.joursAvantExpiration >= 0"
+                            class="badge" [ngClass]="prod.joursAvantExpiration <= 7 ? 'bg-danger' : 'bg-warning text-dark'">
+                        {{ prod.joursAvantExpiration }}{{ t.tr('tdb.joursRestants') }}
+                      </span>
+                      <small class="d-block text-muted">{{ prod.dateExpiration }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reorder Alerts -->
+          <div [class.col-lg-6]="alertesExpiration.length > 0" [class.col-lg-12]="alertesExpiration.length === 0"
+               *ngIf="alertesReapprovisionnement.length > 0">
+            <div class="card fo-alert-card fo-alert-card-reorder">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold">
+                  <i class="bi bi-arrow-repeat me-2" style="color: var(--warning, #f59e0b);"></i>{{ t.tr('tdb.alerteReappro') }}
+                </h6>
+                <span class="badge bg-warning text-dark">{{ alertesReapprovisionnement.length }} {{ t.isFr ? 'produits' : 'products' }}</span>
+              </div>
+              <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                  <a *ngFor="let prod of alertesReapprovisionnement" [routerLink]="['/admin/produits/modifier', prod.id]"
+                     class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-4 py-3">
+                    <div>
+                      <span class="fw-semibold">{{ prod.nom }}</span>
+                      <small class="d-block text-muted">{{ prod.categorieNom }}</small>
+                    </div>
+                    <div class="text-end">
+                      <span class="badge" [ngClass]="prod.quantite <= 2 ? 'bg-danger' : 'bg-warning text-dark'">
+                        {{ prod.quantite }} {{ t.tr('tdb.stockUrgent') }}
+                      </span>
+                      <small class="d-block text-muted">{{ prod.prix | number:'1.2-2' }} TND</small>
+                    </div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Recent data -->
         <div class="row g-4">
           <!-- Catégories récentes -->
@@ -314,6 +383,10 @@ export class TableauDeBordComponent implements OnInit {
   totalCommandes = 0;
   commandesEnAttente = 0;
   chiffreAffaires = 0;
+  produitsExpires = 0;
+  produitsExpirantBientot = 0;
+  alertesExpiration: Produit[] = [];
+  alertesReapprovisionnement: Produit[] = [];
   chargement = true;
   erreur = false;
 
@@ -343,6 +416,10 @@ export class TableauDeBordComponent implements OnInit {
         this.commandesEnAttente = data.commandesEnAttente;
         this.chiffreAffaires = data.chiffreAffaires;
         this.commandes = data.dernieresCommandes || [];
+        this.produitsExpires = data.produitsExpires || 0;
+        this.produitsExpirantBientot = data.produitsExpirantBientot || 0;
+        this.alertesExpiration = data.alertesExpiration || [];
+        this.alertesReapprovisionnement = data.alertesReapprovisionnement || [];
         this.chargement = false;
       },
       error: () => {

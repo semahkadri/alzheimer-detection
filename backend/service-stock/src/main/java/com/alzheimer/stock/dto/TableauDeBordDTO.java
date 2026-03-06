@@ -23,4 +23,10 @@ public class TableauDeBordDTO {
     private long commandesEnAttente;
     private BigDecimal chiffreAffaires;
     private List<CommandeDTO> dernieresCommandes;
+
+    // Smart Alerts
+    private long produitsExpires;
+    private long produitsExpirantBientot;
+    private List<ProduitDTO> alertesExpiration;
+    private List<ProduitDTO> alertesReapprovisionnement;
 }

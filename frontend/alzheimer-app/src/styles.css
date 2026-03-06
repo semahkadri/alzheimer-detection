@@ -4986,3 +4986,256 @@ html[data-theme="dark"] .fo-carousel-arrow:hover:not(.disabled) {
     max-width: 220px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHARMACEUTICAL TRACEABILITY — Admin Form Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+.fo-pharma-section {
+  background: linear-gradient(135deg, rgba(0, 137, 123, 0.04), rgba(26, 115, 232, 0.04));
+  border: 1px solid rgba(0, 137, 123, 0.15);
+  border-radius: var(--radius-lg, 16px);
+  padding: 20px 24px;
+  position: relative;
+}
+
+.fo-pharma-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--pharmacy-green), var(--primary));
+  border-radius: var(--radius-lg, 16px) var(--radius-lg, 16px) 0 0;
+}
+
+.fo-pharma-section-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--pharmacy-green);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHARMACEUTICAL INFO — Product Detail Page
+   ═══════════════════════════════════════════════════════════════════ */
+
+.fo-pharma-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: rgba(0, 137, 123, 0.04);
+  border: 1px solid rgba(0, 137, 123, 0.12);
+  border-radius: var(--radius, 12px);
+}
+
+.fo-pharma-info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.fo-pharma-info-item i {
+  font-size: 1rem;
+  color: var(--pharmacy-green);
+}
+
+.fo-pharma-info-item .label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+}
+
+.fo-pharma-info-item .value {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: rgba(0, 137, 123, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.fo-expiry-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.fo-expiry-ok .fo-expiry-badge {
+  background: var(--success-light);
+  color: var(--success);
+}
+
+.fo-expiry-warning .fo-expiry-badge {
+  background: var(--warning-light);
+  color: #b45309;
+}
+
+.fo-expiry-danger .fo-expiry-badge,
+.fo-expiry-badge-danger {
+  background: var(--danger-light) !important;
+  color: var(--danger) !important;
+}
+
+.fo-expiry-danger {
+  border-color: rgba(217, 48, 37, 0.2) !important;
+  background: rgba(217, 48, 37, 0.04) !important;
+}
+
+.fo-expiry-warning {
+  border-color: rgba(249, 171, 0, 0.2) !important;
+  background: rgba(249, 171, 0, 0.04) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CROSS-SELL — "Frequently Bought Together"
+   ═══════════════════════════════════════════════════════════════════ */
+
+.fo-cross-sell-section {
+  margin-top: 48px;
+  margin-bottom: 32px;
+  padding-top: 32px;
+  border-top: 2px solid rgba(0, 137, 123, 0.12);
+}
+
+.fo-cross-sell-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.fo-cross-sell-header > i {
+  font-size: 2rem;
+  color: var(--pharmacy-green);
+  background: var(--pharmacy-green-light, #e0f2f1);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.fo-cross-sell-header h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  color: var(--text-primary);
+}
+
+.fo-cross-sell-header p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DASHBOARD SMART ALERTS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.fo-alert-card {
+  border: none;
+  border-radius: var(--radius-lg, 16px);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: var(--transition-smooth);
+}
+
+.fo-alert-card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.fo-alert-card-expiry {
+  border-top: 3px solid var(--danger, #dc3545);
+}
+
+.fo-alert-card-reorder {
+  border-top: 3px solid var(--warning, #f9ab00);
+}
+
+.fo-alert-card .card-header {
+  background: var(--bg-card, #fff);
+  border-bottom: 1px solid var(--border, #dadce0);
+  padding: 14px 20px;
+}
+
+.fo-alert-card .list-group-item {
+  border-color: rgba(0, 0, 0, 0.04);
+  transition: background 0.15s ease;
+}
+
+.fo-alert-card .list-group-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE — Advanced Features
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme="dark"] .fo-pharma-section,
+[data-bs-theme="dark"] .fo-pharma-section {
+  background: linear-gradient(135deg, rgba(0, 137, 123, 0.08), rgba(26, 115, 232, 0.08));
+  border-color: rgba(0, 137, 123, 0.25);
+}
+
+[data-theme="dark"] .fo-pharma-info,
+[data-bs-theme="dark"] .fo-pharma-info {
+  background: rgba(0, 137, 123, 0.08);
+  border-color: rgba(0, 137, 123, 0.2);
+}
+
+[data-theme="dark"] .fo-pharma-info-item .value,
+[data-bs-theme="dark"] .fo-pharma-info-item .value {
+  background: rgba(0, 137, 123, 0.15);
+}
+
+[data-theme="dark"] .fo-cross-sell-section,
+[data-bs-theme="dark"] .fo-cross-sell-section {
+  border-top-color: rgba(0, 137, 123, 0.2);
+}
+
+[data-theme="dark"] .fo-cross-sell-header > i,
+[data-bs-theme="dark"] .fo-cross-sell-header > i {
+  background: rgba(0, 137, 123, 0.15);
+}
+
+[data-theme="dark"] .fo-alert-card,
+[data-bs-theme="dark"] .fo-alert-card {
+  background: var(--bg-card, #1e1e1e);
+}
+
+[data-theme="dark"] .fo-alert-card .card-header,
+[data-bs-theme="dark"] .fo-alert-card .card-header {
+  background: var(--bg-card, #1e1e1e);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .fo-alert-card .list-group-item:hover,
+[data-bs-theme="dark"] .fo-alert-card .list-group-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+@media (max-width: 768px) {
+  .fo-pharma-info {
+    flex-direction: column;
+  }
+
+  .fo-cross-sell-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}

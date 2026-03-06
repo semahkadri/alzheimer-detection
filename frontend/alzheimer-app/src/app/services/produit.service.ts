@@ -46,4 +46,8 @@ export class ProduitService {
   supprimerImage(id: number): Observable<Produit> {
     return this.http.delete<Produit>(`${this.apiUrl}/${id}/image`);
   }
+
+  obtenirCrossSell(id: number): Observable<Produit[]> {
+    return this.http.get<Produit[]>(`${this.apiUrl}/${id}/cross-sell`);
+  }
 }

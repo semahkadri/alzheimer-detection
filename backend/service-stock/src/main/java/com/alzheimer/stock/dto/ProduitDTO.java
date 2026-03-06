@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -39,6 +40,10 @@ public class ProduitDTO {
     private BigDecimal prixOriginal;
     private Boolean enPromo;
     private Integer remise;
+
+    private LocalDate dateExpiration;
+    private String numeroLot;
+    private Integer joursAvantExpiration;
 
     private String categorieNom;
     private LocalDateTime dateCreation;

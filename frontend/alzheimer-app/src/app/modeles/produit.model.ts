@@ -8,6 +8,9 @@ export interface Produit {
   prixOriginal?: number;
   enPromo?: boolean;
   remise?: number;
+  dateExpiration?: string;
+  numeroLot?: string;
+  joursAvantExpiration?: number;
   categorieId: number;
   categorieNom?: string;
   dateCreation?: string;

@@ -14,4 +14,8 @@ export interface TableauDeBord {
   commandesEnAttente: number;
   chiffreAffaires: number;
   dernieresCommandes: Commande[];
+  produitsExpires: number;
+  produitsExpirantBientot: number;
+  alertesExpiration: Produit[];
+  alertesReapprovisionnement: Produit[];
 }

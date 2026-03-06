@@ -16,6 +16,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -69,6 +71,8 @@ public class ProduitServiceImpl implements ProduitService {
                 .imageUrl(produitDTO.getImageUrl())
                 .prixOriginal(produitDTO.getPrixOriginal())
                 .enPromo(produitDTO.getEnPromo() != null ? produitDTO.getEnPromo() : false)
+                .dateExpiration(produitDTO.getDateExpiration())
+                .numeroLot(produitDTO.getNumeroLot())
                 .categorie(categorie)
                 .build();
 
@@ -91,6 +95,8 @@ public class ProduitServiceImpl implements ProduitService {
         produit.setImageUrl(produitDTO.getImageUrl());
         produit.setPrixOriginal(produitDTO.getPrixOriginal());
         produit.setEnPromo(produitDTO.getEnPromo() != null ? produitDTO.getEnPromo() : false);
+        produit.setDateExpiration(produitDTO.getDateExpiration());
+        produit.setNumeroLot(produitDTO.getNumeroLot());
         produit.setCategorie(categorie);
 
         Produit modifie = produitRepository.save(produit);
@@ -150,6 +156,30 @@ public class ProduitServiceImpl implements ProduitService {
         }
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProduitDTO> obtenirProduitsCrossSell(Long produitId) {
+        // Find products frequently bought together via order lines
+        List<Long> coPurchasedIds = ligneCommandeRepository.findCoPurchasedProductIds(produitId);
+        if (coPurchasedIds.isEmpty()) {
+            // Fallback: return products from the same category
+            Produit produit = produitRepository.findById(produitId).orElse(null);
+            if (produit == null) return List.of();
+            return produitRepository.findByCategorieId(produit.getCategorie().getId())
+                    .stream()
+                    .filter(p -> !p.getId().equals(produitId))
+                    .limit(4)
+                    .map(this::convertirEnDTO)
+                    .collect(Collectors.toList());
+        }
+        return coPurchasedIds.stream()
+                .limit(4)
+                .map(id -> produitRepository.findById(id).orElse(null))
+                .filter(p -> p != null)
+                .map(this::convertirEnDTO)
+                .collect(Collectors.toList());
+    }
+
     private ProduitDTO convertirEnDTO(Produit produit) {
         Integer remise = null;
         if (Boolean.TRUE.equals(produit.getEnPromo()) && produit.getPrixOriginal() != null
@@ -159,6 +189,11 @@ public class ProduitServiceImpl implements ProduitService {
                     .multiply(BigDecimal.valueOf(100))
                     .divide(produit.getPrixOriginal(), 0, RoundingMode.HALF_UP)
                     .intValue();
+        }
+
+        Integer joursAvantExpiration = null;
+        if (produit.getDateExpiration() != null) {
+            joursAvantExpiration = (int) ChronoUnit.DAYS.between(LocalDate.now(), produit.getDateExpiration());
         }
 
         return ProduitDTO.builder()
@@ -171,6 +206,9 @@ public class ProduitServiceImpl implements ProduitService {
                 .prixOriginal(produit.getPrixOriginal())
                 .enPromo(produit.getEnPromo())
                 .remise(remise)
+                .dateExpiration(produit.getDateExpiration())
+                .numeroLot(produit.getNumeroLot())
+                .joursAvantExpiration(joursAvantExpiration)
                 .categorieId(produit.getCategorie().getId())
                 .categorieNom(produit.getCategorie().getNom())
                 .dateCreation(produit.getDateCreation())

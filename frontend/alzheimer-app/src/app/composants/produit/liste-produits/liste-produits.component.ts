@@ -133,7 +133,16 @@ import { TraductionService } from '../../../services/traduction.service';
                     <td>
                       <span class="badge badge-category">{{ produit.categorieNom }}</span>
                     </td>
-                    <td>{{ produit.dateCreation | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td>
+                      <div>{{ produit.dateCreation | date:'dd/MM/yyyy HH:mm' }}</div>
+                      <small *ngIf="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration < 0"
+                             class="badge bg-danger">{{ t.tr('expiry.expire') }}</small>
+                      <small *ngIf="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration >= 0 && produit.joursAvantExpiration <= 30"
+                             class="badge bg-warning text-dark">{{ produit.joursAvantExpiration }}j</small>
+                      <small *ngIf="produit.numeroLot" class="text-muted d-block" style="font-size: 0.72rem;">
+                        {{ t.tr('expiry.lot') }}: {{ produit.numeroLot }}
+                      </small>
+                    </td>
                     <td class="text-center">
                       <div class="btn-action-group">
                         <a [routerLink]="['/admin/produits/modifier', produit.id]" class="btn btn-sm btn-warning">

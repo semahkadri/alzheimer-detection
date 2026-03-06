@@ -84,6 +84,31 @@ import { SkeletonLoaderComponent } from '../../shared/skeleton-loader/skeleton-l
               </div>
             </div>
 
+            <!-- Pharmaceutical Info (Lot & Expiry) -->
+            <div *ngIf="produit.numeroLot || produit.dateExpiration" class="fo-pharma-info">
+              <div *ngIf="produit.numeroLot" class="fo-pharma-info-item">
+                <i class="bi bi-upc-scan"></i>
+                <span class="label">{{ t.tr('expiry.lot') }}</span>
+                <span class="value">{{ produit.numeroLot }}</span>
+              </div>
+              <div *ngIf="produit.dateExpiration" class="fo-pharma-info-item"
+                   [class.fo-expiry-danger]="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration < 0"
+                   [class.fo-expiry-warning]="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration >= 0 && produit.joursAvantExpiration <= 30"
+                   [class.fo-expiry-ok]="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration > 30">
+                <i class="bi bi-calendar-event"></i>
+                <span class="label">{{ t.tr('expiry.dateExpiration') }}</span>
+                <span class="value">{{ produit.dateExpiration }}</span>
+                <span *ngIf="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration >= 0"
+                      class="fo-expiry-badge">
+                  {{ produit.joursAvantExpiration }} {{ t.tr('expiry.joursRestants') }}
+                </span>
+                <span *ngIf="produit.joursAvantExpiration !== undefined && produit.joursAvantExpiration < 0"
+                      class="fo-expiry-badge fo-expiry-badge-danger">
+                  {{ t.tr('expiry.expire') }}
+                </span>
+              </div>
+            </div>
+
             <!-- Add to Cart -->
             <div *ngIf="produit.quantite > 0" style="margin-top: 24px;">
               <div class="d-flex align-items-center gap-3 mb-3">
@@ -137,6 +162,42 @@ import { SkeletonLoaderComponent } from '../../shared/skeleton-loader/skeleton-l
           </div>
         </div>
 
+        <!-- Cross-sell: Frequently Bought Together -->
+        <div *ngIf="crossSellProducts.length > 0" class="fo-cross-sell-section">
+          <div class="fo-cross-sell-header">
+            <i class="bi bi-cart-check-fill"></i>
+            <div>
+              <h2>{{ t.tr('crossSell.titre') }}</h2>
+              <p>{{ t.tr('crossSell.desc') }}</p>
+            </div>
+          </div>
+          <div class="fo-product-grid">
+            <a *ngFor="let p of crossSellProducts" [routerLink]="['/catalogue', p.id]" class="fo-product-card">
+              <div class="fo-product-card-img">
+                <span *ngIf="p.enPromo && p.remise" class="fo-product-badge fo-badge-promo">-{{ p.remise }}%</span>
+                <img *ngIf="p.imageUrl" [src]="p.imageUrl" [alt]="p.nom" style="width: 100%; height: 100%; object-fit: cover;">
+                <i *ngIf="!p.imageUrl" class="bi bi-box-seam"></i>
+              </div>
+              <div class="fo-product-card-body">
+                <span class="fo-product-brand">{{ p.categorieNom }}</span>
+                <h4>{{ p.nom }}</h4>
+                <div class="fo-product-card-footer">
+                  <div *ngIf="p.enPromo && p.prixOriginal" class="fo-price-block">
+                    <span class="fo-price-original">{{ p.prixOriginal | number:'1.2-2' }} TND</span>
+                    <span class="fo-price-promo">{{ p.prix | number:'1.2-2' }} TND</span>
+                  </div>
+                  <span *ngIf="!p.enPromo || !p.prixOriginal" class="fo-product-price">{{ p.prix | number:'1.2-2' }} TND</span>
+                  <span class="fo-product-stock"
+                        [class.in-stock]="p.quantite > 0"
+                        [class.out-of-stock]="p.quantite === 0">
+                    {{ p.quantite > 0 ? t.tr('common.enStock') : t.tr('common.rupture') }}
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
         <!-- Related Products -->
         <div *ngIf="relatedProducts.length > 0" class="fo-related-section">
           <h2 class="fo-section-title">{{ t.tr('detail.similaires') }}</h2>
@@ -173,6 +234,7 @@ import { SkeletonLoaderComponent } from '../../shared/skeleton-loader/skeleton-l
 export class DetailProduitComponent implements OnInit {
   produit: Produit | null = null;
   relatedProducts: Produit[] = [];
+  crossSellProducts: Produit[] = [];
   loading = true;
   quantite = 1;
   ajoutEnCours = false;
@@ -198,10 +260,12 @@ export class DetailProduitComponent implements OnInit {
       this.loading = true;
       this.quantite = 1;
       this.ajoutOk = false;
+      this.crossSellProducts = [];
       this.produitService.obtenirParId(id).subscribe({
         next: (produit) => {
           this.produit = produit;
           this.loadRelated(produit.categorieId, produit.id!);
+          this.loadCrossSell(produit.id!);
           this.loading = false;
         },
         error: () => this.loading = false
@@ -267,6 +331,13 @@ export class DetailProduitComponent implements OnInit {
 
   onImageMouseLeave(): void {
     this.zoomActive = false;
+  }
+
+  private loadCrossSell(produitId: number): void {
+    this.produitService.obtenirCrossSell(produitId).subscribe({
+      next: (prods) => this.crossSellProducts = prods.slice(0, 4),
+      error: () => this.crossSellProducts = []
+    });
   }
 
   private loadRelated(categorieId: number, currentId: number): void {

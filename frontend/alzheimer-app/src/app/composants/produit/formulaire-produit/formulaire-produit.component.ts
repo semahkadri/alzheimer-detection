@@ -126,6 +126,33 @@ import { TraductionService } from '../../../services/traduction.service';
                   </div>
                 </div>
 
+                <!-- Expiry & Lot Section -->
+                <div class="fo-pharma-section mb-4">
+                  <h6 class="fo-pharma-section-title">
+                    <i class="bi bi-capsule me-2"></i>{{ t.isFr ? 'Traçabilité Pharmaceutique' : 'Pharmaceutical Traceability' }}
+                  </h6>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="dateExpiration" class="form-label">{{ t.tr('expiry.dateExpiration') }}</label>
+                      <input type="date" class="form-control" id="dateExpiration" name="dateExpiration"
+                             [(ngModel)]="produit.dateExpiration"
+                             [ngClass]="{'is-invalid': produit.dateExpiration && isExpired()}">
+                      <div *ngIf="produit.dateExpiration && isExpired()" class="text-danger mt-1" style="font-size: 0.82rem;">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ t.tr('expiry.expire') }}
+                      </div>
+                      <div *ngIf="produit.dateExpiration && !isExpired() && getDaysUntilExpiry() <= 30" class="text-warning mt-1" style="font-size: 0.82rem;">
+                        <i class="bi bi-clock-fill me-1"></i>{{ t.tr('expiry.expirationDans') }} {{ getDaysUntilExpiry() }} {{ t.tr('expiry.jours') }}
+                      </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label for="numeroLot" class="form-label">{{ t.tr('expiry.numeroLot') }}</label>
+                      <input type="text" class="form-control" id="numeroLot" name="numeroLot"
+                             [(ngModel)]="produit.numeroLot" [placeholder]="t.tr('expiry.placeholderLot')"
+                             maxlength="100">
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Promo Section -->
                 <div class="fo-promo-section mb-4" [class.active]="produit.enPromo">
                   <label class="fo-promo-toggle">
@@ -291,6 +318,17 @@ export class FormulaireProduitComponent implements OnInit {
   }
 
   // ─── Promo handling ─────────────────────────────────────
+
+  isExpired(): boolean {
+    if (!this.produit.dateExpiration) return false;
+    return new Date(this.produit.dateExpiration) < new Date();
+  }
+
+  getDaysUntilExpiry(): number {
+    if (!this.produit.dateExpiration) return 999;
+    const diff = new Date(this.produit.dateExpiration).getTime() - new Date().getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  }
 
   onPromoToggle(): void {
     if (!this.produit.enPromo) {

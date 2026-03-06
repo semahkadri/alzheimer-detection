@@ -513,6 +513,34 @@ const DICT: Record<string, TranslationEntry> = {
   'marquee.marques': { fr: 'Nos marques partenaires', en: 'Our partner brands' },
   'backToTop': { fr: 'Haut de page', en: 'Back to top' },
 
+  // ─── Expiry & Lot Tracking ──────────────────────────────────
+  'expiry.dateExpiration': { fr: 'Date d\'expiration', en: 'Expiry date' },
+  'expiry.numeroLot': { fr: 'Numéro de lot', en: 'Batch number' },
+  'expiry.placeholderLot': { fr: 'Ex: LOT-2025-A1234', en: 'E.g.: LOT-2025-A1234' },
+  'expiry.joursRestants': { fr: 'jours restants', en: 'days remaining' },
+  'expiry.expire': { fr: 'Expiré', en: 'Expired' },
+  'expiry.expireBientot': { fr: 'Expire bientôt', en: 'Expiring soon' },
+  'expiry.expirationDans': { fr: 'Expire dans', en: 'Expires in' },
+  'expiry.jours': { fr: 'jours', en: 'days' },
+  'expiry.lot': { fr: 'Lot', en: 'Batch' },
+
+  // ─── Cross-sell ─────────────────────────────────────────────
+  'crossSell.titre': { fr: 'Souvent achetés ensemble', en: 'Frequently Bought Together' },
+  'crossSell.desc': { fr: 'Les clients qui ont acheté ce produit ont aussi acheté', en: 'Customers who bought this product also bought' },
+
+  // ─── Dashboard Alerts ───────────────────────────────────────
+  'tdb.alertes': { fr: 'Alertes Intelligentes', en: 'Smart Alerts' },
+  'tdb.alerteExpiration': { fr: 'Alertes d\'Expiration', en: 'Expiry Alerts' },
+  'tdb.alerteReappro': { fr: 'Réapprovisionnement Urgent', en: 'Urgent Reorder' },
+  'tdb.produitsExpires': { fr: 'Produits Expirés', en: 'Expired Products' },
+  'tdb.expirantBientot': { fr: 'Expirent sous 30j', en: 'Expiring in 30d' },
+  'tdb.aucuneAlerte': { fr: 'Aucune alerte', en: 'No alerts' },
+  'tdb.joursRestants': { fr: 'j restants', en: 'd remaining' },
+  'tdb.stockUrgent': { fr: 'unités restantes', en: 'units left' },
+  'tdb.expireDans': { fr: 'Expire dans', en: 'Expires in' },
+  'tdb.dejExpire': { fr: 'Déjà expiré', en: 'Already expired' },
+  'tdb.lotLabel': { fr: 'Lot:', en: 'Batch:' },
+
   // ─── Promo / Discount System ──────────────────────────────
   'promo.badge': { fr: 'Promo', en: 'Sale' },
   'promo.economie': { fr: 'Économie', en: 'You save' },
