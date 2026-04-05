@@ -16,7 +16,6 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/emails")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 @Tag(name = "Emails", description = "Consultation des emails envoyés")
 public class EmailLogControleur {
 

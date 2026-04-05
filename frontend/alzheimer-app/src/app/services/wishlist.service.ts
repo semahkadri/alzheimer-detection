@@ -2,32 +2,37 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Produit } from '../modeles/produit.model';
 
-const STORAGE_KEY = 'pharmacare_wishlist';
+const BASE_KEY = 'pharmacare_wishlist';
 
 @Injectable({ providedIn: 'root' })
 export class WishlistService {
   private items$ = new BehaviorSubject<Produit[]>(this.load());
 
-  private load(): Produit[] {
+  /** Get storage key scoped by user (if logged in) */
+  private getKey(): string {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch {
-      return [];
-    }
+      const user = JSON.parse(localStorage.getItem('utilisateur') || 'null');
+      return user?.id ? `${BASE_KEY}_${user.id}` : BASE_KEY;
+    } catch { return BASE_KEY; }
+  }
+
+  private load(): Produit[] {
+    try { return JSON.parse(localStorage.getItem(this.getKey()) || '[]'); }
+    catch { return []; }
   }
 
   private persist(items: Produit[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    localStorage.setItem(this.getKey(), JSON.stringify(items));
     this.items$.next(items);
   }
 
-  get wishlist$() {
-    return this.items$.asObservable();
+  /** Call when user logs in or out to switch wishlist scope */
+  recharger(): void {
+    this.items$.next(this.load());
   }
 
-  get count(): number {
-    return this.items$.value.length;
-  }
+  get wishlist$() { return this.items$.asObservable(); }
+  get count(): number { return this.items$.value.length; }
 
   isInWishlist(id: number): boolean {
     return this.items$.value.some(p => p.id === id);

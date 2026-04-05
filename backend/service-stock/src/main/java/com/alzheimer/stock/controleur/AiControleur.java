@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/ai")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 @Tag(name = "AI Assistant", description = "Endpoints pour l'assistant IA PharmaCare")
 public class AiControleur {
 

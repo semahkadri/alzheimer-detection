@@ -19,6 +19,8 @@ public interface CommandeRepository extends JpaRepository<Commande, Long> {
 
     List<Commande> findAllByOrderByDateCommandeDesc();
 
+    List<Commande> findByEmailClientIgnoreCaseOrderByDateCommandeDesc(String emailClient);
+
     long countByStatut(StatutCommande statut);
 
     @Query("SELECT COALESCE(SUM(c.montantTotal), 0) FROM Commande c")

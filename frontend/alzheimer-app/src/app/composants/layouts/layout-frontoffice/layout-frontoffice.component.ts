@@ -10,10 +10,12 @@ import { PanierService } from '../../../services/panier.service';
 import { CategorieService } from '../../../services/categorie.service';
 import { WishlistService } from '../../../services/wishlist.service';
 import { CompareService } from '../../../services/compare.service';
+import { AuthService } from '../../../services/auth.service';
 import { CompareBarComponent } from '../../shared/compare-bar/compare-bar.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant/ai-assistant.component';
 import { Categorie } from '../../../modeles/categorie.model';
 import { Panier } from '../../../modeles/panier.model';
+import { Utilisateur } from '../../../modeles/auth.model';
 
 @Component({
   selector: 'app-layout-frontoffice',
@@ -149,8 +151,9 @@ import { Panier } from '../../../modeles/panier.model';
             </div>
           </div>
 
-          <!-- ── Admin shortcut (inside nav — no white space below) ── -->
-          <a routerLink="/admin" class="fo-lsidebar-link fo-lsidebar-admin-nav"
+          <!-- ── Admin shortcut — only for admins ── -->
+          <a *ngIf="authUser?.role === 'ADMIN'" routerLink="/admin"
+             class="fo-lsidebar-link fo-lsidebar-admin-nav"
              (click)="sidebarOpen=false"
              title="Administration">
             <span class="fo-lsidebar-icon"><i class="bi bi-shield-lock-fill"></i></span>
@@ -191,18 +194,18 @@ import { Panier } from '../../../modeles/panier.model';
           </div>
 
           <div class="fo-topbar-right">
-            <!-- Language toggle (pill style) -->
+            <!-- Language toggle -->
             <div class="fo-topbar-lang">
               <button [class.active]="t.isFr" (click)="t.setLang('fr')">FR</button>
               <button [class.active]="t.isEn" (click)="t.setLang('en')">EN</button>
             </div>
-            <!-- Divider -->
             <div class="fo-topbar-sep"></div>
             <!-- Theme toggle -->
             <button class="fo-topbar-icon-btn" (click)="th.toggle()"
                     [title]="th.isDark ? t.tr('theme.light') : t.tr('theme.dark')">
               <i class="bi" [class.bi-moon-stars-fill]="th.isLight" [class.bi-sun-fill]="th.isDark"></i>
             </button>
+            <div class="fo-topbar-sep"></div>
             <!-- Compare -->
             <a routerLink="/comparer" class="fo-topbar-icon-btn fo-topbar-compare-btn"
                [title]="t.isFr ? 'Comparateur' : 'Compare'">
@@ -220,6 +223,49 @@ import { Panier } from '../../../modeles/panier.model';
               <i class="bi bi-cart3"></i>
               <span class="fo-topbar-badge" *ngIf="nombreArticles > 0" [class.bounce]="cartBounce">{{ nombreArticles }}</span>
             </a>
+            <div class="fo-topbar-sep"></div>
+            <!-- User Account (rightmost — like Amazon, DocMorris) -->
+            <div class="fo-topbar-user-area" *ngIf="authUser; else loginBtn">
+              <button class="fo-topbar-user-btn" (click)="userDropdownOpen = !userDropdownOpen">
+                <span class="fo-topbar-user-avatar">{{ getInitiales() }}</span>
+                <span class="fo-topbar-user-name">{{ authUser.prenom }}</span>
+                <i class="bi bi-chevron-down" style="font-size:0.65rem;"></i>
+              </button>
+              <div class="fo-topbar-user-dropdown" *ngIf="userDropdownOpen">
+                <div class="fo-topbar-user-dropdown-header">
+                  <strong>{{ authUser.prenom }} {{ authUser.nom }}</strong>
+                  <small>{{ authUser.email }}</small>
+                  <span class="fo-topbar-user-role" [class.fo-role-admin]="authUser.role === 'ADMIN'">
+                    {{ authUser.role === 'ADMIN' ? 'Admin' : (t.isFr ? 'Membre' : 'Member') }}
+                  </span>
+                </div>
+                <div class="fo-topbar-user-dropdown-body">
+                  <a routerLink="/profil" (click)="userDropdownOpen = false">
+                    <i class="bi bi-person-circle me-2"></i>{{ t.isFr ? 'Mon profil' : 'My profile' }}
+                  </a>
+                  <a routerLink="/mes-commandes" (click)="userDropdownOpen = false">
+                    <i class="bi bi-bag-check me-2"></i>{{ t.isFr ? 'Mes commandes' : 'My orders' }}
+                  </a>
+                  <a routerLink="/wishlist" (click)="userDropdownOpen = false">
+                    <i class="bi bi-heart me-2"></i>{{ t.isFr ? 'Mes souhaits' : 'My wishlist' }}
+                  </a>
+                  <a routerLink="/admin" *ngIf="authUser.role === 'ADMIN'" (click)="userDropdownOpen = false">
+                    <i class="bi bi-shield-lock me-2"></i>{{ t.isFr ? 'Administration' : 'Admin panel' }}
+                  </a>
+                  <hr>
+                  <a (click)="deconnexion()" class="fo-topbar-user-logout">
+                    <i class="bi bi-box-arrow-right me-2"></i>{{ t.isFr ? 'Se déconnecter' : 'Sign out' }}
+                  </a>
+                </div>
+              </div>
+            </div>
+            <ng-template #loginBtn>
+              <a routerLink="/connexion" class="fo-topbar-login-btn"
+                 [title]="t.isFr ? 'Se connecter' : 'Sign in'">
+                <i class="bi bi-person-circle"></i>
+                <span>{{ t.isFr ? 'Connexion' : 'Sign in' }}</span>
+              </a>
+            </ng-template>
           </div>
         </header>
 
@@ -399,6 +445,8 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
 
   sidebarOpen = false;
   sidebarCollapsed = false;
+  userDropdownOpen = false;
+  authUser: Utilisateur | null = null;
 
   scrollProgress = 0;
   showBackToTop = false;
@@ -411,6 +459,7 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
   private itemAddedSub!: Subscription;
   private wishlistSub!: Subscription;
   private compareSub!: Subscription;
+  private authSub!: Subscription;
   private miniCartTimer: any;
 
   constructor(
@@ -420,6 +469,7 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
     private categorieService: CategorieService,
     public wishlistService: WishlistService,
     public compareService: CompareService,
+    public authService: AuthService,
     private router: Router
   ) {}
 
@@ -470,6 +520,8 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
     this.wishlistSub = this.wishlistService.wishlist$.subscribe(items => this.wishlistCount = items.length);
     this.compareSub = this.compareService.items$.subscribe(items => this.compareCount = items.length);
 
+    this.authSub = this.authService.utilisateur$.subscribe(u => this.authUser = u);
+
     this.itemAddedSub = this.panierService.itemAdded$.subscribe(() => {
       this.miniCartOpen = true;
       clearTimeout(this.miniCartTimer);
@@ -477,6 +529,24 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
       this.cartBounce = true;
       setTimeout(() => this.cartBounce = false, 600);
     });
+  }
+
+  getInitiales(): string {
+    if (!this.authUser) return '';
+    return (this.authUser.prenom.charAt(0) + this.authUser.nom.charAt(0)).toUpperCase();
+  }
+
+  deconnexion(): void {
+    this.userDropdownOpen = false;
+    this.authService.deconnexion();
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.fo-topbar-user-area')) {
+      this.userDropdownOpen = false;
+    }
   }
 
   @HostListener('window:scroll')
@@ -497,6 +567,7 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
     this.itemAddedSub?.unsubscribe();
     this.wishlistSub?.unsubscribe();
     this.compareSub?.unsubscribe();
+    this.authSub?.unsubscribe();
     clearTimeout(this.miniCartTimer);
   }
 }

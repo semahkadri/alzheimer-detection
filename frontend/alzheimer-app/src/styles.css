@@ -13846,3 +13846,412 @@ img {
   color: var(--text-primary);
 }
 
+/* ============================================================
+   AUTH UI — Topbar User Dropdown & Login Button
+   ============================================================ */
+
+/* Login Button (when not logged in) */
+.fo-topbar-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent-color), var(--primary-dark, #3b6bcc));
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.fo-topbar-login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(78, 128, 238, 0.35);
+  color: #fff;
+}
+.fo-topbar-login-btn i {
+  font-size: 1rem;
+}
+
+/* User Area (when logged in) */
+.fo-topbar-user-area {
+  position: relative;
+}
+
+.fo-topbar-user-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.fo-topbar-user-btn:hover {
+  border-color: var(--accent-color);
+  background: rgba(78, 128, 238, 0.04);
+}
+
+.fo-topbar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent-color), #10B981);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.fo-topbar-user-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* User Dropdown */
+.fo-topbar-user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  z-index: 9999;
+  animation: slideDown 0.2s ease;
+  overflow: hidden;
+}
+
+.fo-topbar-user-dropdown-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fo-topbar-user-dropdown-header strong {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+.fo-topbar-user-dropdown-header small {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.fo-topbar-user-role {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10B981;
+  width: fit-content;
+}
+.fo-topbar-user-role.fo-role-admin {
+  background: rgba(78, 128, 238, 0.1);
+  color: var(--accent-color);
+}
+
+.fo-topbar-user-dropdown-body {
+  padding: 8px;
+}
+.fo-topbar-user-dropdown-body a {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.fo-topbar-user-dropdown-body a:hover {
+  background: rgba(78, 128, 238, 0.06);
+  color: var(--accent-color);
+}
+.fo-topbar-user-dropdown-body hr {
+  margin: 4px 0;
+  border-color: var(--border);
+}
+
+.fo-topbar-user-logout {
+  color: #dc2626 !important;
+}
+.fo-topbar-user-logout:hover {
+  background: rgba(220, 38, 38, 0.06) !important;
+  color: #dc2626 !important;
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .fo-topbar-user-dropdown {
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .fo-topbar-login-btn {
+  background: linear-gradient(135deg, #60A5FA, #34D399);
+}
+
+/* Mobile: hide user name, keep avatar */
+@media (max-width: 575px) {
+  .fo-topbar-user-name { display: none; }
+  .fo-topbar-user-btn i.bi-chevron-down { display: none; }
+  .fo-topbar-login-btn span { display: none; }
+  .fo-topbar-login-btn { padding: 7px 10px; }
+}
+
+/* ============================================================
+   PROFILE PAGE
+   ============================================================ */
+.profil-card { border-radius: 12px; border: 1px solid var(--border); background: var(--bg-card); overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+.profil-card-header { background: linear-gradient(135deg, var(--accent-color), var(--primary-dark, #3b6bcc)); color: #fff; font-weight: 700; font-size: 1rem; padding: 1rem 1.5rem; }
+.profil-avatar-section { display: flex; align-items: center; gap: 1.5rem; padding: 1rem 0; }
+.profil-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-color), #10B981); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 700; letter-spacing: 1px; flex-shrink: 0; box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.profil-avatar-info { display: flex; flex-direction: column; gap: 4px; }
+.profil-user-name { margin: 0; font-weight: 700; font-size: 1.25rem; color: var(--text-primary); }
+.profil-member-since { font-size: 0.82rem; color: var(--text-secondary); }
+.profil-divider { border-color: var(--border); opacity: 0.5; margin: 1.25rem 0; }
+.profil-label { display: block; font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.profil-field-wrapper { display: flex; align-items: center; background: var(--bg-main); border: 1px solid var(--border); border-radius: 10px; padding: 0 1rem; height: 44px; transition: border-color 0.2s ease; }
+.profil-field-wrapper:focus-within { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(78,128,238,0.1); }
+.profil-field-disabled { opacity: 0.7; cursor: not-allowed; }
+.profil-field-icon { color: var(--text-secondary); font-size: 1rem; margin-right: 0.75rem; flex-shrink: 0; }
+.profil-field-lock { color: var(--text-secondary); font-size: 0.8rem; margin-left: auto; opacity: 0.5; }
+.profil-field-value { flex: 1; font-size: 0.92rem; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.profil-input { flex: 1; border: none; background: transparent; font-size: 0.92rem; color: var(--text-primary); outline: none; height: 100%; }
+.profil-role-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.75rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.3px; }
+.profil-role-admin { background: rgba(78,128,238,0.1); color: var(--accent-color); }
+.profil-role-user { background: rgba(16,185,129,0.1); color: #10B981; }
+@media (max-width: 576px) { .profil-avatar-section { flex-direction: column; text-align: center; } .profil-avatar-info { align-items: center; } }
+
+/* ============================================================
+   AUTH PAGES — Stunning Pharmacy-Themed Design
+   Brand: #4E80EE (blue) + #10B981 (pharmacy green) + #F1F5F9 (bg)
+   ============================================================ */
+.auth-page {
+  background:
+    linear-gradient(135deg, #0f2647 0%, #1a3a6b 30%, #2b5ea7 60%, #4E80EE 100%) !important;
+  position: relative;
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+/* ── Animated gradient mesh overlay ── */
+.auth-page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 800px 600px at 20% 30%, rgba(16,185,129,0.18) 0%, transparent 50%),
+    radial-gradient(ellipse 600px 800px at 85% 70%, rgba(78,128,238,0.22) 0%, transparent 50%),
+    radial-gradient(ellipse 400px 400px at 50% 10%, rgba(255,255,255,0.06) 0%, transparent 40%);
+  pointer-events: none;
+  animation: authMesh 18s ease-in-out infinite alternate;
+}
+/* ── Floating pharmacy cross ── */
+.auth-page::after {
+  content: '+';
+  position: absolute;
+  top: 12%;
+  right: 8%;
+  font-size: 180px;
+  font-weight: 200;
+  color: rgba(255,255,255,0.04);
+  pointer-events: none;
+  animation: authCross 24s ease-in-out infinite;
+  line-height: 1;
+}
+@keyframes authMesh {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.85; transform: scale(1.05); }
+}
+@keyframes authCross {
+  0%, 100% { transform: rotate(0deg) scale(1); opacity: 0.04; }
+  50% { transform: rotate(15deg) scale(1.1); opacity: 0.07; }
+}
+
+/* ── Decorative dots pattern ── */
+.auth-page .auth-container,
+.auth-page .auth-wrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Brand text — white on gradient ── */
+.auth-page .auth-branding-name,
+.auth-page .auth-brand-name {
+  color: #fff !important;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.auth-page .auth-branding,
+.auth-page .auth-brand {
+  position: relative;
+  z-index: 1;
+}
+.auth-page .auth-footer {
+  color: rgba(255,255,255,0.75) !important;
+  position: relative;
+  z-index: 1;
+}
+.auth-page .auth-footer a {
+  color: #fff !important;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-page .auth-footer a:hover {
+  color: #a5d8ff !important;
+}
+
+/* ── Card — frosted glass effect ── */
+.auth-page .auth-card {
+  background: rgba(255,255,255,0.96);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 16px;
+  box-shadow:
+    0 4px 6px rgba(0,0,0,0.04),
+    0 12px 40px rgba(0,0,0,0.12),
+    0 0 0 1px rgba(255,255,255,0.1);
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+.auth-page .auth-card-header {
+  background: linear-gradient(135deg, #4E80EE 0%, #2b5ea7 50%, #10B981 100%) !important;
+  color: #fff;
+  border-bottom: none;
+}
+
+/* ── Branding icon enhancement ── */
+.auth-page .auth-branding-icon,
+.auth-page .auth-brand-icon {
+  background: linear-gradient(135deg, #4E80EE, #10B981) !important;
+  box-shadow: 0 8px 24px rgba(78,128,238,0.35);
+}
+
+/* ═══════════ DARK MODE ═══════════ */
+[data-theme="dark"] .auth-page {
+  background:
+    linear-gradient(135deg, #060d1a 0%, #0d1b33 30%, #142952 60%, #1d3d73 100%) !important;
+}
+[data-theme="dark"] .auth-page::before {
+  background:
+    radial-gradient(ellipse 800px 600px at 20% 30%, rgba(96,165,250,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse 600px 800px at 85% 70%, rgba(52,211,153,0.08) 0%, transparent 50%);
+}
+[data-theme="dark"] .auth-page::after {
+  color: rgba(255,255,255,0.02);
+}
+[data-theme="dark"] .auth-page .auth-card {
+  background: rgba(15,23,42,0.92);
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+}
+[data-theme="dark"] .auth-page .auth-card-header {
+  background: linear-gradient(135deg, #2563eb, #059669) !important;
+}
+[data-theme="dark"] .auth-page .auth-branding-icon,
+[data-theme="dark"] .auth-page .auth-brand-icon {
+  background: linear-gradient(135deg, #3b82f6, #10B981) !important;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.3);
+}
+/* Dark mode form inputs */
+[data-theme="dark"] .auth-page .auth-card input,
+[data-theme="dark"] .auth-page .auth-card select {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.12);
+  color: #e2e8f0;
+}
+[data-theme="dark"] .auth-page .auth-card input:focus,
+[data-theme="dark"] .auth-page .auth-card select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+[data-theme="dark"] .auth-page .auth-card label {
+  color: #94a3b8;
+}
+[data-theme="dark"] .auth-page .auth-card .auth-input-icon {
+  color: #64748b;
+}
+[data-theme="dark"] .auth-page .auth-footer a:hover {
+  color: #93c5fd !important;
+}
+
+/* ============================================================
+   MOBILE RESPONSIVE — Auth Pages + New Components
+   ============================================================ */
+
+/* Auth cards — extra small screens */
+@media (max-width: 375px) {
+  .auth-page .auth-wrapper,
+  .auth-page .auth-container { max-width: 95vw; }
+  .auth-page .auth-card-header { padding: 16px 16px 12px; }
+  .auth-page .auth-card-header h1,
+  .auth-page .auth-card-header h2 { font-size: 1.1rem; }
+  .auth-page .auth-card-header p { font-size: 0.75rem; }
+  .auth-page .auth-card-body { padding: 16px; }
+}
+
+/* Verification code inputs — small screens */
+@media (max-width: 420px) {
+  .ve-code-input { width: 42px; height: 52px; font-size: 1.3rem; }
+  .ve-code-row { gap: 6px; }
+}
+@media (max-width: 350px) {
+  .ve-code-input { width: 36px; height: 48px; font-size: 1.1rem; border-radius: 8px; }
+  .ve-code-row { gap: 3px; }
+}
+
+/* Password toggle — larger touch target on mobile */
+@media (max-width: 768px) {
+  .auth-toggle-pw, .auth-toggle-pwd {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Profile fields — don't truncate on mobile */
+@media (max-width: 576px) {
+  .profil-field-value { white-space: normal; overflow: visible; text-overflow: clip; word-break: break-word; }
+  .profil-avatar { width: 64px; height: 64px; font-size: 1.3rem; }
+  .profil-user-name { font-size: 1.1rem; }
+}
+
+/* User dropdown — full width on tiny screens */
+@media (max-width: 400px) {
+  .fo-topbar-user-dropdown {
+    position: fixed;
+    top: 70px;
+    right: 8px;
+    left: 8px;
+    width: auto;
+    max-width: calc(100vw - 16px);
+  }
+}
+
+/* ============================================================
+   ADMIN SIDEBAR — Utilisateurs nav link
+   ============================================================ */
+.sidebar-link[href*="utilisateurs"] .sidebar-icon-box {
+  color: var(--accent-color);
+}
+

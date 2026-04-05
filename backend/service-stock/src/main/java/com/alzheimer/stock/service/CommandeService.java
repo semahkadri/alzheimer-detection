@@ -18,6 +18,8 @@ public interface CommandeService {
 
     CommandeDTO obtenirCommandeParReference(String reference);
 
+    List<CommandeDTO> listerCommandesParEmail(String email);
+
     CommandeDTO modifierStatut(Long id, StatutCommande statut);
 
     long compterParStatut(StatutCommande statut);

@@ -17,7 +17,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/commandes")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 @Tag(name = "Commandes", description = "Gestion des commandes")
 public class CommandeControleur {
 
@@ -44,6 +43,12 @@ public class CommandeControleur {
     @Operation(summary = "Obtenir une commande par ID")
     public ResponseEntity<CommandeDTO> obtenirCommande(@PathVariable Long id) {
         return ResponseEntity.ok(commandeService.obtenirCommandeParId(id));
+    }
+
+    @GetMapping("/client/{email}")
+    @Operation(summary = "Obtenir les commandes d'un client par email")
+    public ResponseEntity<List<CommandeDTO>> listerCommandesParEmail(@PathVariable String email) {
+        return ResponseEntity.ok(commandeService.listerCommandesParEmail(email));
     }
 
     @GetMapping("/reference/{reference}")

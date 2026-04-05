@@ -56,3 +56,8 @@ seed.sql
 seed.sh
 run_seed.bat
 DEV_LAUNCH.md
+
+# ===================== Secrets =====================
+.env
+*.env.local
+**/application-local.yml

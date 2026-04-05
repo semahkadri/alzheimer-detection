@@ -15,7 +15,6 @@ export class PanierService {
   private itemAddedSubject = new Subject<void>();
 
   itemAdded$ = this.itemAddedSubject.asObservable();
-
   panier$ = this.panierSubject.asObservable();
 
   constructor(private http: HttpClient) {
@@ -30,6 +29,21 @@ export class PanierService {
     return this.panierSubject.value?.nombreArticles || 0;
   }
 
+  /**
+   * Switch cart session when user logs in or out.
+   * Logged in → deterministic `user-{id}` (persists across devices)
+   * Logged out → random session (anonymous cart)
+   */
+  switchToUserSession(userId: number | null): void {
+    if (userId) {
+      this.sessionId = `user-${userId}`;
+    } else {
+      this.sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
+    }
+    localStorage.setItem('panier_session_id', this.sessionId);
+    this.chargerPanier().subscribe({ error: () => {} });
+  }
+
   chargerPanier(): Observable<Panier> {
     return this.http.get<Panier>(`${this.apiUrl}/${this.sessionId}`).pipe(
       tap(panier => this.panierSubject.next(panier))
@@ -38,8 +52,7 @@ export class PanierService {
 
   ajouterProduit(produitId: number, quantite: number = 1): Observable<Panier> {
     return this.http.post<Panier>(
-      `${this.apiUrl}/${this.sessionId}/produits/${produitId}?quantite=${quantite}`,
-      {}
+      `${this.apiUrl}/${this.sessionId}/produits/${produitId}?quantite=${quantite}`, {}
     ).pipe(
       tap(panier => {
         this.panierSubject.next(panier);
@@ -50,8 +63,7 @@ export class PanierService {
 
   modifierQuantite(produitId: number, quantite: number): Observable<Panier> {
     return this.http.put<Panier>(
-      `${this.apiUrl}/${this.sessionId}/produits/${produitId}?quantite=${quantite}`,
-      {}
+      `${this.apiUrl}/${this.sessionId}/produits/${produitId}?quantite=${quantite}`, {}
     ).pipe(
       tap(panier => this.panierSubject.next(panier))
     );
@@ -68,20 +80,14 @@ export class PanierService {
   viderPanier(): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${this.sessionId}`).pipe(
       tap(() => this.panierSubject.next({
-        sessionId: this.sessionId,
-        lignes: [],
-        nombreArticles: 0,
-        montantTotal: 0
+        sessionId: this.sessionId, lignes: [], nombreArticles: 0, montantTotal: 0
       }))
     );
   }
 
   resetApresCommande(): void {
     this.panierSubject.next({
-      sessionId: this.sessionId,
-      lignes: [],
-      nombreArticles: 0,
-      montantTotal: 0
+      sessionId: this.sessionId, lignes: [], nombreArticles: 0, montantTotal: 0
     });
   }
 

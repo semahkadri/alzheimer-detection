@@ -30,6 +30,10 @@ export class CommandeService {
     return this.http.get<Commande>(`${this.apiUrl}/reference/${reference}`);
   }
 
+  listerParEmail(email: string): Observable<Commande[]> {
+    return this.http.get<Commande[]>(`${this.apiUrl}/client/${encodeURIComponent(email)}`);
+  }
+
   modifierStatut(id: number, statut: string): Observable<Commande> {
     return this.http.patch<Commande>(`${this.apiUrl}/${id}/statut?statut=${statut}`, {});
   }

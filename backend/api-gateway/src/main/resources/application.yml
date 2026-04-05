@@ -17,6 +17,12 @@ spring:
             - Path=/api/stock/**
           filters:
             - RewritePath=/api/stock/(?<segment>.*), /api/${segment}
+        - id: service-user
+          uri: lb://service-user
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - RewritePath=/api/user/(?<segment>.*), /api/${segment}
       globalcors:
         cors-configurations:
           '[/**]':
@@ -38,6 +44,7 @@ info:
     version: 1.0.0
   services:
     stock: /api/stock/**
+    user: /api/user/**
 
 management:
   endpoints:

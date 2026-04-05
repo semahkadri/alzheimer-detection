@@ -167,6 +167,14 @@ public class CommandeServiceImpl implements CommandeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<CommandeDTO> listerCommandesParEmail(String email) {
+        return commandeRepository.findByEmailClientIgnoreCaseOrderByDateCommandeDesc(email).stream()
+                .map(this::convertirEnDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public CommandeDTO modifierStatut(Long id, StatutCommande statut) {
         Commande commande = commandeRepository.findById(id)
                 .orElseThrow(() -> new ResourceIntrouvableException("Commande", "id", id));

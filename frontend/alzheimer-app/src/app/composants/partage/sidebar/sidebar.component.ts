@@ -5,6 +5,7 @@ import { Subscription, filter } from 'rxjs';
 import { TraductionService } from '../../../services/traduction.service';
 import { ThemeService } from '../../../services/theme.service';
 import { EmailLogService } from '../../../services/email-log.service';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -68,6 +69,13 @@ import { EmailLogService } from '../../../services/email-log.service';
           <span class="sidebar-link-text">{{ t.tr('sidebar.commandes') }}</span>
         </a>
 
+        <a routerLink="/admin/utilisateurs" routerLinkActive="active"
+           class="sidebar-nav-item" (click)="mobileOpen=false"
+           [title]="isCollapsed ? (t.isFr ? 'Utilisateurs' : 'Users') : ''">
+          <span class="sidebar-icon-box"><i class="fa-solid fa-users"></i></span>
+          <span class="sidebar-link-text">{{ t.isFr ? 'Utilisateurs' : 'Users' }}</span>
+        </a>
+
         <div class="sidebar-nav-label">{{ t.tr('sidebar.analyse') }}</div>
 
         <a routerLink="/admin/analyse-stock" routerLinkActive="active"
@@ -102,16 +110,16 @@ import { EmailLogService } from '../../../services/email-log.service';
         </a>
       </nav>
 
-      <!-- User Profile (replaces PRO card — team's admin-sidebar style) -->
+      <!-- User Profile -->
       <div class="sidebar-user-profile" *ngIf="!isCollapsed">
         <div class="sidebar-user-avatar">
           <i class="fa-solid fa-user-shield"></i>
         </div>
         <div class="sidebar-user-info">
-          <div class="sidebar-user-name">Administrateur</div>
+          <div class="sidebar-user-name">{{ authService.currentUser?.prenom || 'Admin' }} {{ authService.currentUser?.nom || '' }}</div>
           <div class="sidebar-user-role">
             <span class="sidebar-user-dot"></span>
-            PharmaCare Admin
+            {{ authService.currentUser?.role === 'ADMIN' ? 'PharmaCare Admin' : (t.isFr ? 'Utilisateur' : 'User') }}
           </div>
         </div>
       </div>
@@ -119,6 +127,17 @@ import { EmailLogService } from '../../../services/email-log.service';
         <div class="sidebar-user-avatar">
           <i class="fa-solid fa-user-shield"></i>
         </div>
+      </div>
+      <!-- Logout & Back to Store -->
+      <div style="padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;" *ngIf="!isCollapsed">
+        <a routerLink="/" class="sidebar-nav-item" style="font-size:0.78rem; opacity: 0.7;">
+          <span class="sidebar-icon-box"><i class="fa-solid fa-store"></i></span>
+          <span class="sidebar-link-text">{{ t.isFr ? 'Retour boutique' : 'Back to store' }}</span>
+        </a>
+        <a class="sidebar-nav-item" style="font-size:0.78rem; opacity: 0.7; cursor:pointer;" (click)="deconnexion()">
+          <span class="sidebar-icon-box"><i class="fa-solid fa-right-from-bracket"></i></span>
+          <span class="sidebar-link-text">{{ t.isFr ? 'Déconnexion' : 'Sign out' }}</span>
+        </a>
       </div>
 
     </aside>
@@ -162,7 +181,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
   private timerInterval: any;
   private emailInterval: any;
 
-  constructor(private router: Router, public t: TraductionService, public th: ThemeService, private emailService: EmailLogService) {}
+  constructor(private router: Router, public t: TraductionService, public th: ThemeService, private emailService: EmailLogService, public authService: AuthService) {}
+
+  deconnexion(): void {
+    this.authService.deconnexion();
+  }
 
   ngOnInit(): void {
     this.isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
@@ -207,7 +230,9 @@ export class SidebarComponent implements OnInit, OnDestroy {
       '/admin/produits/ajouter': this.t.tr('breadcrumb.nouveauProd'),
       '/admin/commandes': this.t.tr('breadcrumb.commandes'),
       '/admin/analyse-stock': this.t.tr('breadcrumb.analyseStock'),
-      '/admin/emails': this.t.tr('breadcrumb.emails')
+      '/admin/emails': this.t.tr('breadcrumb.emails'),
+      '/admin/utilisateurs': this.t.tr('breadcrumb.utilisateurs'),
+      '/admin/utilisateurs/ajouter': this.t.isFr ? 'Nouvel utilisateur' : 'New user'
     };
     if (map[url] !== undefined) {
       this.currentPage = map[url];

@@ -1,0 +1,93 @@
+version: '3.8'
+
+# ============================================================
+# PharmaCare — Full Microservices Stack
+# ============================================================
+# Start:  docker-compose up -d
+# Stop:   docker-compose down
+# Logs:   docker-compose logs -f <service-name>
+# Status: docker-compose ps
+# ============================================================
+
+services:
+
+  # ── Database (shared by all services) ──────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: pharmacare-db
+    environment:
+      POSTGRES_DB: alzheimer_stock
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Service Discovery ──────────────────────────────────
+  eureka-server:
+    build: ./backend/eureka-server
+    container_name: pharmacare-eureka
+    ports:
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Service Stock (Products, Orders, Cart) ─────────────
+  service-stock:
+    build: ./backend/service-stock
+    container_name: pharmacare-stock
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/alzheimer_stock
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Service User (Auth, JWT, User Management) ──────────
+  service-user:
+    build: ./backend/service-user
+    container_name: pharmacare-user
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/alzheimer_stock
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: root
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── API Gateway (Single entry point) ───────────────────
+  api-gateway:
+    build: ./backend/api-gateway
+    container_name: pharmacare-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+      - service-stock
+      - service-user
+
+  # ── Frontend (Angular) ────────────────────────────────
+  # frontend:
+  #   build: ./frontend/alzheimer-app
+  #   container_name: pharmacare-frontend
+  #   ports:
+  #     - "4200:80"
+  #   depends_on:
+  #     - api-gateway
+
+volumes:
+  pgdata:

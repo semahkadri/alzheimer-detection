@@ -274,6 +274,16 @@ export class CommanderComponent implements OnInit {
 
   ngOnInit(): void {
     this.commande.sessionId = this.panierService.currentSessionId;
+
+    // Auto-fill from logged-in user
+    try {
+      const user = JSON.parse(localStorage.getItem('utilisateur') || 'null');
+      if (user) {
+        this.commande.nomClient = (user.prenom + ' ' + user.nom).trim();
+        this.commande.emailClient = user.email || '';
+      }
+    } catch {}
+
     this.panierService.chargerPanier().subscribe({
       next: (data) => {
         this.panier = data;

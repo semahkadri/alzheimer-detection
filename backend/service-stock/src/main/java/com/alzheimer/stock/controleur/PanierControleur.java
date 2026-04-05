@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/panier")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 @Tag(name = "Panier", description = "Gestion du panier d'achat")
 public class PanierControleur {
 
