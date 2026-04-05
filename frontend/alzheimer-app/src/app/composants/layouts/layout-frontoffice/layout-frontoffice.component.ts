@@ -179,7 +179,7 @@ import { Utilisateur } from '../../../modeles/auth.model';
               <i class="bi bi-heart-pulse-fill"></i>
               <span>PharmaCare</span>
             </a>
-            <!-- Search bar -->
+            <!-- Search bar (desktop: full input, mobile: icon → opens overlay) -->
             <div class="fo-topbar-search">
               <i class="bi bi-search fo-topbar-search-ico"></i>
               <input type="text" class="fo-topbar-search-input"
@@ -187,13 +187,31 @@ import { Utilisateur } from '../../../modeles/auth.model';
                      [(ngModel)]="navSearch"
                      (keyup.enter)="doNavSearch()"
                      (keyup.escape)="navSearch = ''">
-              <button class="fo-topbar-search-btn" (click)="doNavSearch()">
+              <button class="fo-topbar-search-btn" (click)="mobileSearchOpen ? doNavSearch() : openMobileSearch()">
                 <i class="bi bi-search"></i>
               </button>
+            </div>
+
+            <!-- Mobile search overlay -->
+            <div class="fo-mobile-search-overlay" *ngIf="mobileSearchOpen">
+              <div class="fo-mobile-search-bar">
+                <i class="bi bi-search"></i>
+                <input type="text" [(ngModel)]="navSearch"
+                       [placeholder]="t.tr('nav.rechercher')"
+                       (keyup.enter)="doNavSearch(); mobileSearchOpen=false"
+                       #mobileSearchInput>
+                <button (click)="mobileSearchOpen=false; navSearch=''">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
             </div>
           </div>
 
           <div class="fo-topbar-right">
+            <!-- Search icon (mobile only — opens overlay) -->
+            <button class="fo-topbar-icon-btn fo-topbar-search-mobile" (click)="openMobileSearch()">
+              <i class="bi bi-search"></i>
+            </button>
             <!-- Language toggle -->
             <div class="fo-topbar-lang">
               <button [class.active]="t.isFr" (click)="t.setLang('fr')">FR</button>
@@ -446,6 +464,7 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
   sidebarOpen = false;
   sidebarCollapsed = false;
   userDropdownOpen = false;
+  mobileSearchOpen = false;
   authUser: Utilisateur | null = null;
 
   scrollProgress = 0;
@@ -529,6 +548,14 @@ export class LayoutFrontofficeComponent implements OnInit, OnDestroy {
       this.cartBounce = true;
       setTimeout(() => this.cartBounce = false, 600);
     });
+  }
+
+  openMobileSearch(): void {
+    this.mobileSearchOpen = true;
+    setTimeout(() => {
+      const input = document.querySelector('.fo-mobile-search-bar input') as HTMLInputElement;
+      input?.focus();
+    }, 100);
   }
 
   getInitiales(): string {

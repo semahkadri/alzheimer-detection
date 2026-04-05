@@ -55,10 +55,10 @@ import { Panier, LignePanier } from '../../../modeles/panier.model';
                 <strong>{{ minutesRestantes }}:{{ secondesRestantes.toString().padStart(2, '0') }}</strong>
                 {{ t.isFr ? 'min' : 'min' }}
               </p>
-              <p *ngIf="minutesRestantes !== null && minutesRestantes === 0 && secondesRestantes === 0" class="text-danger fw-bold">
-                {{ t.isFr ? 'Panier expiré — veuillez recharger la page' : 'Cart expired — please reload the page' }}
-                <button class="btn btn-sm btn-outline-danger ms-2" (click)="chargerPanier()">
-                  <i class="bi bi-arrow-clockwise"></i>
+              <p *ngIf="minutesRestantes !== null && minutesRestantes === 0 && secondesRestantes === 0">
+                {{ t.isFr ? 'Votre panier a expiré.' : 'Your cart has expired.' }}
+                <button class="btn btn-sm btn-primary ms-2" (click)="chargerPanier()">
+                  <i class="bi bi-arrow-clockwise me-1"></i>{{ t.isFr ? 'Actualiser' : 'Refresh' }}
                 </button>
               </p>
             </div>
@@ -202,7 +202,9 @@ export class PanierComponent implements OnInit, OnDestroy {
 
   private demarrerCompte(expireA: string): void {
     if (this.countdownTimer) clearInterval(this.countdownTimer);
-    const expiration = new Date(expireA).getTime();
+    // Ensure UTC interpretation — backend sends LocalDateTime without timezone
+    const utcString = expireA.endsWith('Z') ? expireA : expireA + 'Z';
+    const expiration = new Date(utcString).getTime();
     const tick = () => {
       const restant = Math.max(0, expiration - Date.now());
       this.minutesRestantes = Math.floor(restant / 60000);

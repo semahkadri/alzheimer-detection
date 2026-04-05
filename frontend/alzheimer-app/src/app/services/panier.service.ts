@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Subject, Observable, tap } from 'rxjs';
+import { BehaviorSubject, Subject, Observable, tap, catchError, of } from 'rxjs';
 import { Panier } from '../modeles/panier.model';
 import { environment } from '../../environments/environment';
 
@@ -41,12 +41,21 @@ export class PanierService {
       this.sessionId = 'session-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9);
     }
     localStorage.setItem('panier_session_id', this.sessionId);
+    // Reset cart immediately to avoid stale data
+    this.panierSubject.next({ sessionId: this.sessionId, lignes: [], nombreArticles: 0, montantTotal: 0 });
+    // Then load the real cart
     this.chargerPanier().subscribe({ error: () => {} });
   }
 
   chargerPanier(): Observable<Panier> {
     return this.http.get<Panier>(`${this.apiUrl}/${this.sessionId}`).pipe(
-      tap(panier => this.panierSubject.next(panier))
+      tap(panier => this.panierSubject.next(panier)),
+      catchError(() => {
+        // Cart doesn't exist yet — return empty
+        const empty: Panier = { sessionId: this.sessionId, lignes: [], nombreArticles: 0, montantTotal: 0 };
+        this.panierSubject.next(empty);
+        return of(empty);
+      })
     );
   }
 

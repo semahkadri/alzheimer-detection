@@ -28,6 +28,18 @@ spring:
   sql:
     init:
       mode: always
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+            required: true
 
 springdoc:
   api-docs:
@@ -36,12 +48,6 @@ springdoc:
     path: /api/swagger-ui.html
     tags-sorter: alpha
     operations-sorter: method
-
-info:
-  app:
-    name: Service Stock - Gestion de Stock
-    description: Microservice de gestion de stock (Catégories, Produits, Commandes, Panier)
-    version: 1.0.0
 
 management:
   endpoints:
@@ -55,6 +61,11 @@ management:
 app:
   upload:
     dir: uploads
+  jwt:
+    secret: ${JWT_SECRET:f8a3b7c1e9d2a4f6b8c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8}
+    access-token-expiration: 86400000
+    refresh-token-expiration: 604800000
+  frontend-url: ${FRONTEND_URL:https://semahkadri.github.io/alzheimer-detection}
   mail:
     admin-email: admin@pharmacare.tn
   ai:
@@ -62,6 +73,8 @@ app:
     api-url: https://api.groq.com/openai/v1/chat/completions
     model: llama-3.3-70b-versatile
     enabled: ${AI_ENABLED:true}
+  cors:
+    allowed-origins: http://localhost:4200,https://semahkadri.github.io
 
 eureka:
   client:

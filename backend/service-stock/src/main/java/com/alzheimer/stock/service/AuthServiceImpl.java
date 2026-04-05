@@ -1,10 +1,10 @@
-package com.alzheimer.user.service;
+package com.alzheimer.stock.service;
 
-import com.alzheimer.user.dto.*;
-import com.alzheimer.user.entite.Role;
-import com.alzheimer.user.entite.Utilisateur;
-import com.alzheimer.user.repository.UtilisateurRepository;
-import com.alzheimer.user.security.JwtService;
+import com.alzheimer.stock.dto.*;
+import com.alzheimer.stock.entite.Role;
+import com.alzheimer.stock.entite.Utilisateur;
+import com.alzheimer.stock.repository.UtilisateurRepository;
+import com.alzheimer.stock.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -56,7 +56,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         utilisateurRepository.save(utilisateur);
 
-        // Send email synchronously — see the error if it fails
+        // Send email (Resend on Railway, SMTP locally)
         String mailError = mailService.envoyerCodeVerification(utilisateur.getEmail(), utilisateur.getPrenom(), code);
 
         Map<String, String> response = new HashMap<>();
@@ -64,9 +64,10 @@ public class AuthServiceImpl implements AuthService {
         if (mailError == null) {
             response.put("message", "Un code de vérification a été envoyé à " + utilisateur.getEmail());
         } else {
-            response.put("message", "Code de vérification");
-            response.put("code", code);
+            response.put("message", "Erreur envoi email. Veuillez réessayer.");
+            response.put("mailError", mailError);
         }
+        // Code is NEVER sent to frontend — only via email
         return response;
     }
 

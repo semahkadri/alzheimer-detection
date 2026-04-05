@@ -3,6 +3,8 @@ package com.alzheimer.stock.exception;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -63,6 +65,24 @@ public class GestionGlobaleExceptions {
         erreur.put("message", message);
         erreur.put("statut", HttpStatus.CONFLICT.value());
         return new ResponseEntity<>(erreur, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, Object>> gererMauvaisIdentifiants(BadCredentialsException ex) {
+        Map<String, Object> erreur = new HashMap<>();
+        erreur.put("timestamp", LocalDateTime.now());
+        erreur.put("message", "Email ou mot de passe incorrect");
+        erreur.put("statut", HttpStatus.UNAUTHORIZED.value());
+        return new ResponseEntity<>(erreur, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<Map<String, Object>> gererCompteDesactive(DisabledException ex) {
+        Map<String, Object> erreur = new HashMap<>();
+        erreur.put("timestamp", LocalDateTime.now());
+        erreur.put("message", "Compte désactivé. Contactez l'administrateur.");
+        erreur.put("statut", HttpStatus.FORBIDDEN.value());
+        return new ResponseEntity<>(erreur, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
