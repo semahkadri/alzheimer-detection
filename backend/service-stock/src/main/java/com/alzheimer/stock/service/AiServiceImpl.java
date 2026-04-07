@@ -68,6 +68,17 @@ public class AiServiceImpl implements AiService {
             List<Long> productIds = extractProductIds(rawText);
             String cleanText = rawText.replaceAll("\\[(?:PRODUITS|PRODUCTS):[^\\]]*\\]", "").trim();
 
+            // Fallback: if model didn't add [PRODUCTS:] marker, detect product names in text
+            if (productIds.isEmpty()) {
+                String lowerText = cleanText.toLowerCase();
+                for (ProduitDTO p : allProducts) {
+                    if (p.getNom() != null && lowerText.contains(p.getNom().toLowerCase().split(" — ")[0].split(" \\(")[0].trim().toLowerCase())) {
+                        productIds.add(p.getId());
+                        if (productIds.size() >= 3) break;
+                    }
+                }
+            }
+
             List<ProduitDTO> suggested = productIds.stream()
                 .map(id -> allProducts.stream()
                     .filter(p -> id.equals(p.getId()))
