@@ -69,9 +69,9 @@ app:
   mail:
     admin-email: admin@pharmacare.tn
   ai:
-    api-key: ${GROQ_API_KEY:}
-    api-url: https://api.groq.com/openai/v1/chat/completions
-    model: llama-3.3-70b-versatile
+    api-key: ${AI_API_KEY:}
+    api-url: https://openrouter.ai/api/v1/chat/completions
+    model: qwen/qwen3.6-plus:free
     enabled: ${AI_ENABLED:true}
   cors:
     allowed-origins: http://localhost:4200,https://semahkadri.github.io
