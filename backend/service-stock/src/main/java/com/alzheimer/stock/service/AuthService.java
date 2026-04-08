@@ -19,7 +19,7 @@ public interface AuthService {
 
     AuthReponseDTO refreshToken(String refreshToken);
 
-    void demanderResetMotDePasse(String email);
+    Map<String, String> demanderResetMotDePasse(String email);
 
     void resetMotDePasse(String token, String nouveauMotDePasse);
 

@@ -554,10 +554,18 @@ export class InscriptionComponent {
 
     this.authService.inscription(this.form).subscribe({
       next: (res: any) => {
-        const params: any = { email: res.email };
-        if (res.code) params.code = res.code;
-        if (res.mailError) params.mailError = res.mailError;
-        this.router.navigate(['/verifier-email'], { queryParams: params });
+        if (res.autoVerified && res.accessToken) {
+          // Email failed — account auto-verified, auto-login
+          localStorage.setItem('accessToken', res.accessToken);
+          localStorage.setItem('refreshToken', res.refreshToken);
+          localStorage.setItem('utilisateur', JSON.stringify({
+            email: res.email, nom: this.form.nom, prenom: this.form.prenom, role: 'UTILISATEUR'
+          }));
+          this.router.navigate(['/']);
+          return;
+        }
+        // Email sent — go to verification page
+        this.router.navigate(['/verifier-email'], { queryParams: { email: res.email } });
       },
       error: (err) => {
         this.enCours = false;

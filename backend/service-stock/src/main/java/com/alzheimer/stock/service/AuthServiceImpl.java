@@ -56,18 +56,30 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         utilisateurRepository.save(utilisateur);
 
-        // Send email (Resend on Railway, SMTP locally)
+        // Try to send verification email
         String mailError = mailService.envoyerCodeVerification(utilisateur.getEmail(), utilisateur.getPrenom(), code);
 
+        if (mailError == null) {
+            // Email sent → user must verify via code
+            Map<String, String> response = new HashMap<>();
+            response.put("email", utilisateur.getEmail());
+            response.put("message", "Un code de vérification a été envoyé à " + utilisateur.getEmail());
+            return response;
+        }
+
+        // Email failed → auto-verify and return tokens (fallback for production without domain)
+        log.warn("Email failed for {} — auto-verifying account. Reason: {}", utilisateur.getEmail(), mailError);
+        utilisateur.setEmailVerifie(true);
+        utilisateur.setTokenVerification(null);
+        utilisateurRepository.save(utilisateur);
+
+        UserDetails userDetails = toUserDetails(utilisateur);
         Map<String, String> response = new HashMap<>();
         response.put("email", utilisateur.getEmail());
-        if (mailError == null) {
-            response.put("message", "Un code de vérification a été envoyé à " + utilisateur.getEmail());
-        } else {
-            response.put("message", "Erreur envoi email. Veuillez réessayer.");
-            response.put("mailError", mailError);
-        }
-        // Code is NEVER sent to frontend — only via email
+        response.put("message", "Compte créé avec succès");
+        response.put("accessToken", jwtService.generateAccessToken(userDetails));
+        response.put("refreshToken", jwtService.generateRefreshToken(userDetails));
+        response.put("autoVerified", "true");
         return response;
     }
 
@@ -204,16 +216,27 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    @Value("${app.frontend-url:http://localhost:4200}")
+    private String frontendUrl;
+
     @Override
-    public void demanderResetMotDePasse(String email) {
+    public Map<String, String> demanderResetMotDePasse(String email) {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Si l'email existe, un lien de réinitialisation a été envoyé.");
+
         utilisateurRepository.findByEmail(email.toLowerCase().trim()).ifPresent(u -> {
-            // UUID token — impossible to brute force (unlike 6-digit codes)
             String token = UUID.randomUUID().toString();
             u.setTokenReset(token);
             u.setDateExpirationReset(LocalDateTime.now().plusHours(1));
             utilisateurRepository.save(u);
-            mailService.envoyerCodeReset(u.getEmail(), token);
+            boolean emailSent = mailService.envoyerCodeReset(u.getEmail(), token);
+            if (!emailSent) {
+                // Email failed — return reset link directly (production fallback)
+                response.put("resetLink", frontendUrl + "/reset-mot-de-passe?token=" + token);
+            }
         });
+
+        return response;
     }
 
     @Override

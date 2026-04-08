@@ -54,8 +54,7 @@ public class AuthControleur {
     @PostMapping("/mot-de-passe-oublie")
     @Operation(summary = "Demander la réinitialisation du mot de passe")
     public ResponseEntity<Map<String, String>> motDePasseOublie(@RequestBody Map<String, String> body) {
-        authService.demanderResetMotDePasse(body.get("email"));
-        return ResponseEntity.ok(Map.of("message", "Si l'email existe, un code de réinitialisation a été généré"));
+        return ResponseEntity.ok(authService.demanderResetMotDePasse(body.get("email")));
     }
 
     @PostMapping("/reset-mot-de-passe")

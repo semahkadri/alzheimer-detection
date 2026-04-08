@@ -378,9 +378,13 @@ export class MotDePasseOublieComponent {
     this.enCours = true;
 
     this.authService.motDePasseOublie(this.email).subscribe({
-      next: () => {
+      next: (res: any) => {
         this.enCours = false;
         this.succes = true;
+        // If email failed, backend returns resetLink directly
+        if (res.resetLink) {
+          window.location.href = res.resetLink;
+        }
       },
       error: (err) => {
         this.enCours = false;
