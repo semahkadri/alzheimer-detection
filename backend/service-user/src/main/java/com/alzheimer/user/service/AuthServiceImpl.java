@@ -89,6 +89,23 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public Map<String, String> renvoyerCode(String email) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email.toLowerCase().trim())
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé"));
+        if (utilisateur.isEmailVerifie()) {
+            throw new IllegalArgumentException("Email déjà vérifié");
+        }
+        String code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1000000));
+        utilisateur.setTokenVerification(code);
+        utilisateurRepository.save(utilisateur);
+        mailService.envoyerCodeVerification(utilisateur.getEmail(), utilisateur.getPrenom(), code);
+        Map<String, String> response = new HashMap<>();
+        response.put("email", utilisateur.getEmail());
+        response.put("message", "Nouveau code envoyé à " + utilisateur.getEmail());
+        return response;
+    }
+
+    @Override
     public AuthReponseDTO verifierCode(String email, String code) {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email.toLowerCase().trim())
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé"));

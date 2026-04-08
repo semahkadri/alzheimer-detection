@@ -99,15 +99,11 @@ public class AuthServiceImpl implements AuthService {
         String code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1000000));
         utilisateur.setTokenVerification(code);
         utilisateurRepository.save(utilisateur);
-        String mailError = mailService.envoyerCodeVerification(utilisateur.getEmail(), utilisateur.getPrenom(), code);
+        // Send email — code is NEVER returned to frontend
+        mailService.envoyerCodeVerification(utilisateur.getEmail(), utilisateur.getPrenom(), code);
         Map<String, String> response = new HashMap<>();
         response.put("email", utilisateur.getEmail());
-        if (mailError == null) {
-            response.put("message", "Nouveau code envoyé à " + utilisateur.getEmail());
-        } else {
-            response.put("message", "Code de vérification");
-            response.put("code", code);
-        }
+        response.put("message", "Nouveau code envoyé à " + utilisateur.getEmail());
         return response;
     }
 

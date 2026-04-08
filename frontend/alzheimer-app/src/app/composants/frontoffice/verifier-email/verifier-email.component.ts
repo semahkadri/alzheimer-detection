@@ -11,7 +11,7 @@ import { TraductionService } from '../../../services/traduction.service';
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="auth-page">
-      <div style="width:100%; max-width:460px; position:relative; z-index:1;">
+      <div style="width:100%; max-width:460px; position:relative; z-index:1; margin:0 auto;">
 
         <!-- Brand -->
         <a routerLink="/" style="display:block; text-align:center; margin-bottom:28px; text-decoration:none;">
@@ -40,17 +40,8 @@ import { TraductionService } from '../../../services/traduction.service';
               </span>
             </div>
 
-            <!-- Code shown (Railway fallback) -->
-            <div *ngIf="devCode" style="background:linear-gradient(135deg,rgba(78,128,238,0.06),rgba(16,185,129,0.06)); border:1px solid rgba(78,128,238,0.2); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:0.82rem; text-align:center;">
-              <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:10px;">
-                <i class="bi bi-shield-lock-fill" style="color:#4E80EE;"></i>
-                <strong style="color:var(--text-primary);">{{ t.isFr ? 'Votre code' : 'Your code' }}</strong>
-              </div>
-              <div style="font-size:1.5rem; font-weight:800; letter-spacing:6px; color:var(--primary,#4E80EE); font-family:monospace;">{{ devCode }}</div>
-            </div>
-
             <!-- Check email message -->
-            <div *ngIf="!devCode && !mailError" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(78,128,238,0.08)); border:1px dashed rgba(16,185,129,0.3); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:0.82rem;">
+            <div *ngIf="!mailError" style="background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(78,128,238,0.08)); border:1px dashed rgba(16,185,129,0.3); border-radius:10px; padding:12px 16px; margin:16px 0; font-size:0.82rem;">
               <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
                 <i class="bi bi-envelope-check-fill" style="color:#10B981; font-size:1.1rem;"></i>
                 <strong style="color:var(--text-primary);">{{ t.isFr ? 'Consultez votre email' : 'Check your inbox' }}</strong>
@@ -144,7 +135,7 @@ export class VerifierEmailComponent implements OnInit {
 
   ngOnInit(): void {
     this.email = this.route.snapshot.queryParamMap.get('email') || '';
-    this.devCode = this.route.snapshot.queryParamMap.get('code') || '';
+    // Code is NEVER shown on frontend — only via email
     this.mailError = this.route.snapshot.queryParamMap.get('mailError') || '';
     if (!this.email) this.router.navigate(['/inscription']);
     setTimeout(() => this.focusInput(), 300);
@@ -183,9 +174,9 @@ export class VerifierEmailComponent implements OnInit {
     this.resendMsg = '';
     this.erreur = '';
     this.authService.renvoyerCode(this.email).subscribe({
-      next: (res) => {
-        if (res.code) this.devCode = res.code;
-        this.resendMsg = this.t.isFr ? 'Nouveau code envoye !' : 'New code sent!';
+      next: () => {
+        this.devCode = ''; // Never show code on screen
+        this.resendMsg = this.t.isFr ? 'Nouveau code envoye ! Consultez votre email.' : 'New code sent! Check your email.';
         this.startCooldown();
         setTimeout(() => this.resendMsg = '', 5000);
       },

@@ -13,6 +13,8 @@ public interface AuthService {
 
     AuthReponseDTO verifierCode(String email, String code);
 
+    Map<String, String> renvoyerCode(String email);
+
     AuthReponseDTO connexion(ConnexionDTO dto);
 
     AuthReponseDTO refreshToken(String refreshToken);

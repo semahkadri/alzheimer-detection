@@ -33,6 +33,12 @@ public class AuthControleur {
         return ResponseEntity.ok(authService.verifierCode(body.get("email"), body.get("code")));
     }
 
+    @PostMapping("/renvoyer-code")
+    @Operation(summary = "Renvoyer le code de vérification")
+    public ResponseEntity<Map<String, String>> renvoyerCode(@RequestBody Map<String, String> body) {
+        return ResponseEntity.ok(authService.renvoyerCode(body.get("email")));
+    }
+
     @PostMapping("/connexion")
     @Operation(summary = "Se connecter (email doit être vérifié)")
     public ResponseEntity<AuthReponseDTO> connexion(@Valid @RequestBody ConnexionDTO dto) {
