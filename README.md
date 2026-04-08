@@ -178,69 +178,81 @@ alzheimer-detection/
 │   │       └── resources/
 │   │           └── application.yml                      # Configuration + Routes
 │   │
-│   └── service-stock/                                   # Microservice Stock
-│       ├── pom.xml
-│       ├── uploads/                                     # Images produit (gitignored, créé auto)
+│   ├── service-stock/                                   # Microservice Stock + Auth (production)
+│   │   ├── pom.xml
+│   │   ├── uploads/                                     # Images produit (gitignored)
+│   │   └── src/main/
+│   │       ├── java/com/alzheimer/stock/
+│   │       │   ├── ServiceStockApplication.java         # Point d'entrée (@EnableAsync)
+│   │       │   ├── config/
+│   │       │   │   ├── SecurityConfig.java              # Spring Security + JWT + CORS
+│   │       │   │   ├── AdminInitializer.java            # Seed admin (admin@pharmacare.tn)
+│   │       │   │   ├── OpenApiConfig.java               # Swagger/OpenAPI
+│   │       │   │   ├── WebConfig.java                   # CORS + uploads
+│   │       │   │   └── SchedulingConfig.java            # Tâches planifiées
+│   │       │   ├── security/
+│   │       │   │   ├── JwtService.java                  # Génération/validation JWT
+│   │       │   │   ├── JwtAuthenticationFilter.java     # Filtre JWT par requête
+│   │       │   │   └── UserDetailsServiceImpl.java      # Chargement utilisateur Spring Security
+│   │       │   ├── entite/
+│   │       │   │   ├── Utilisateur.java                 # Entité utilisateur (auth)
+│   │       │   │   ├── Role.java                        # Enum ADMIN / UTILISATEUR
+│   │       │   │   ├── Categorie.java                   # Catégorie produit
+│   │       │   │   ├── Produit.java                     # Produit (prix, stock, expiration)
+│   │       │   │   ├── Panier.java                      # Panier (session + expiration)
+│   │       │   │   ├── LignePanier.java                 # Ligne de panier
+│   │       │   │   ├── Commande.java                    # Commande client
+│   │       │   │   ├── LigneCommande.java               # Ligne de commande
+│   │       │   │   ├── StatutCommande.java              # Enum statuts
+│   │       │   │   └── EmailLog.java                    # Log emails
+│   │       │   ├── dto/                                 # Objets de transfert
+│   │       │   │   ├── InscriptionDTO.java              # Inscription (validation)
+│   │       │   │   ├── ConnexionDTO.java                # Connexion
+│   │       │   │   ├── AuthReponseDTO.java              # Réponse auth (tokens + user)
+│   │       │   │   ├── UtilisateurDTO.java              # Utilisateur
+│   │       │   │   ├── RefreshTokenDTO.java             # Refresh token
+│   │       │   │   ├── CategorieDTO.java, ProduitDTO.java, CommandeDTO.java...
+│   │       │   │   └── AnalyseStockDTO.java             # Analyse stock (KPIs, ABC)
+│   │       │   ├── service/
+│   │       │   │   ├── AuthService.java / Impl          # Inscription, connexion, vérification, reset
+│   │       │   │   ├── UtilisateurService.java / Impl   # CRUD utilisateurs (admin)
+│   │       │   │   ├── MailService.java                 # Email (Resend HTTP + SMTP fallback)
+│   │       │   │   ├── AiService.java / Impl            # Chatbot IA (OpenRouter + fallback)
+│   │       │   │   ├── CategorieService.java / Impl     # Catégories
+│   │       │   │   ├── ProduitService.java / Impl       # Produits + images
+│   │       │   │   ├── PanierService.java / Impl        # Panier + expiration
+│   │       │   │   ├── CommandeService.java / Impl      # Commandes + statuts
+│   │       │   │   └── AnalyseStockService.java / Impl  # Analyse (ABC, KPIs, prévisions)
+│   │       │   ├── controleur/
+│   │       │   │   ├── AuthControleur.java              # /api/auth/** (inscription, connexion, reset)
+│   │       │   │   ├── UtilisateurControleur.java       # /api/utilisateurs/** (admin)
+│   │       │   │   ├── AiControleur.java                # /api/ai/** (chatbot)
+│   │       │   │   ├── CategorieControleur.java         # /api/categories/**
+│   │       │   │   ├── ProduitControleur.java           # /api/produits/**
+│   │       │   │   ├── PanierControleur.java            # /api/panier/**
+│   │       │   │   ├── CommandeControleur.java          # /api/commandes/**
+│   │       │   │   └── AnalyseStockControleur.java      # /api/analyse-stock
+│   │       │   └── exception/
+│   │       │       ├── ResourceIntrouvableException.java
+│   │       │       └── GestionGlobaleExceptions.java     # Auth errors + validation
+│   │       └── resources/
+│   │           ├── application.yml                      # Config (env vars pour secrets)
+│   │           ├── application-local.yml                # Secrets locaux (GITIGNORED)
+│   │           └── data.sql
+│   │
+│   └── service-user/                                    # Microservice Auth (développement local)
+│       ├── pom.xml                                      # Spring Security + JWT + Mail
 │       └── src/main/
-│           ├── java/com/alzheimer/stock/
-│           │   ├── ServiceStockApplication.java         # Point d'entrée
-│           │   ├── config/
-│           │   │   ├── OpenApiConfig.java               # Configuration Swagger/OpenAPI
-│           │   │   ├── WebConfig.java                   # Servir /uploads/** + CORS images
-│           │   │   └── SchedulingConfig.java            # Activation des tâches planifiées
-│           │   ├── entite/
-│           │   │   ├── Categorie.java                   # Entité JPA Catégorie
-│           │   │   ├── Produit.java                     # Entité JPA Produit (avec imageUrl)
-│           │   │   ├── Panier.java                      # Entité JPA Panier (session + expiration)
-│           │   │   ├── LignePanier.java                 # Entité JPA Ligne de panier
-│           │   │   ├── Commande.java                    # Entité JPA Commande
-│           │   │   ├── LigneCommande.java               # Entité JPA Ligne de commande
-│           │   │   └── StatutCommande.java              # Enum des statuts de commande
-│           │   ├── dto/
-│           │   │   ├── CategorieDTO.java                # Objet de transfert Catégorie
-│           │   │   ├── ProduitDTO.java                  # Objet de transfert Produit (avec imageUrl)
-│           │   │   ├── TableauDeBordDTO.java            # Objet de transfert Dashboard
-│           │   │   ├── PanierDTO.java                   # Objet de transfert Panier (avec expiration)
-│           │   │   ├── LignePanierDTO.java              # Objet de transfert Ligne Panier
-│           │   │   ├── CommandeDTO.java                 # Objet de transfert Commande
-│           │   │   ├── LigneCommandeDTO.java            # Objet de transfert Ligne Commande
-│           │   │   ├── CreerCommandeDTO.java            # DTO création commande (checkout)
-│           │   │   └── AnalyseStockDTO.java             # DTO analyse de stock (KPIs, ABC, tendances)
-│           │   ├── repository/
-│           │   │   ├── CategorieRepository.java         # Accès données Catégorie
-│           │   │   ├── ProduitRepository.java           # Accès données Produit
-│           │   │   ├── PanierRepository.java            # Accès données Panier (+ requêtes expiration)
-│           │   │   ├── LignePanierRepository.java       # Accès données Ligne Panier
-│           │   │   ├── LigneCommandeRepository.java     # Accès données Ligne Commande (nullify refs)
-│           │   │   └── CommandeRepository.java          # Accès données Commande
-│           │   ├── service/
-│           │   │   ├── CategorieService.java            # Interface service Catégorie
-│           │   │   ├── CategorieServiceImpl.java        # Implémentation Catégorie
-│           │   │   ├── ProduitService.java              # Interface service Produit (+ image upload)
-│           │   │   ├── ProduitServiceImpl.java          # Implémentation Produit (+ image upload)
-│           │   │   ├── FichierStorageService.java       # Stockage fichiers (upload, validation, suppression)
-│           │   │   ├── TableauDeBordService.java        # Interface service Dashboard
-│           │   │   ├── TableauDeBordServiceImpl.java    # Implémentation Dashboard
-│           │   │   ├── PanierService.java               # Interface service Panier
-│           │   │   ├── PanierServiceImpl.java           # Implémentation Panier (+ expiration)
-│           │   │   ├── PanierExpirationTache.java       # Tâche planifiée : purge paniers expirés
-│           │   │   ├── CommandeService.java             # Interface service Commande
-│           │   │   ├── CommandeServiceImpl.java         # Implémentation Commande
-│           │   │   ├── AnalyseStockService.java         # Interface service Analyse Stock
-│           │   │   └── AnalyseStockServiceImpl.java     # Implémentation Analyse Stock (ABC, KPIs, prévisions)
-│           │   ├── controleur/
-│           │   │   ├── CategorieControleur.java         # REST Controller Catégorie
-│           │   │   ├── ProduitControleur.java           # REST Controller Produit (+ upload image)
-│           │   │   ├── TableauDeBordControleur.java     # REST Controller Dashboard
-│           │   │   ├── PanierControleur.java            # REST Controller Panier
-│           │   │   ├── CommandeControleur.java          # REST Controller Commande
-│           │   │   └── AnalyseStockControleur.java      # REST Controller Analyse Stock
-│           │   └── exception/
-│           │       ├── ResourceIntrouvableException.java # Exception 404
-│           │       └── GestionGlobaleExceptions.java     # Gestionnaire global d'erreurs (+ MaxUploadSize)
+│           ├── java/com/alzheimer/user/                 # Même structure que service-stock/auth
+│           │   ├── config/                              # SecurityConfig, AdminInitializer, WebConfig
+│           │   ├── security/                            # JwtService, Filter, UserDetailsService
+│           │   ├── entite/                              # Utilisateur, Role
+│           │   ├── dto/                                 # Auth DTOs
+│           │   ├── service/                             # AuthService, UtilisateurService, MailService
+│           │   └── controleur/                          # AuthControleur, UtilisateurControleur
 │           └── resources/
-│               ├── application.yml                      # Configuration + DB + Swagger + Multipart
-│               └── data.sql                             # Données initiales de test
+│               ├── application.yml                      # Port 8082
+│               └── application-local.yml                # Gmail SMTP credentials (GITIGNORED)
 │
 ├── frontend/
 │   └── alzheimer-app/
@@ -252,78 +264,84 @@ alzheimer-detection/
 │           ├── main.ts                                  # Point d'entrée Angular
 │           ├── styles.css                               # Styles globaux (backoffice + frontoffice .fo-* + dark mode)
 │           ├── environments/
-│           │   ├── environment.ts                       # Config développement (port 8081)
-│           │   └── environment.prod.ts                  # Config production (gateway 8080)
+│           │   ├── environment.ts                       # Config développement (stock:8081 + user:8082)
+│           │   └── environment.prod.ts                  # Config production (Railway)
 │           └── app/
-│               ├── app.component.ts                     # Composant racine (simple <router-outlet>)
-│               ├── app.config.ts                        # Configuration application
-│               ├── app.routes.ts                        # Routes : frontoffice (/) + backoffice (/admin)
+│               ├── app.component.ts                     # Composant racine
+│               ├── app.config.ts                        # Config + JWT interceptor
+│               ├── app.routes.ts                        # Routes + guards (auth, admin, guest)
+│               ├── guards/
+│               │   └── auth.guard.ts                    # authGuard, adminGuard, guestGuard
+│               ├── interceptors/
+│               │   └── jwt.interceptor.ts               # Injection automatique Bearer token
 │               ├── modeles/
+│               │   ├── auth.model.ts                    # Utilisateur, ConnexionRequest, AuthReponse
 │               │   ├── categorie.model.ts               # Interface Catégorie
-│               │   ├── produit.model.ts                 # Interface Produit (avec imageUrl)
-│               │   ├── tableau-de-bord.model.ts         # Interface Tableau de Bord
-│               │   ├── panier.model.ts                  # Interface Panier + LignePanier (avec expiration)
-│               │   ├── commande.model.ts                # Interface Commande + CreerCommande
-│               │   └── analyse-stock.model.ts           # Interfaces AnalyseStock, AnalyseProduit, KPIs
+│               │   ├── produit.model.ts                 # Interface Produit
+│               │   ├── panier.model.ts                  # Interface Panier + LignePanier
+│               │   ├── commande.model.ts                # Interface Commande
+│               │   └── analyse-stock.model.ts           # Interfaces Analyse Stock
 │               ├── services/
-│               │   ├── categorie.service.ts             # Service HTTP Catégorie
-│               │   ├── produit.service.ts               # Service HTTP Produit (+ uploaderImage, supprimerImage)
-│               │   ├── tableau-de-bord.service.ts       # Service HTTP Dashboard
-│               │   ├── panier.service.ts                # Service HTTP Panier (BehaviorSubject + expiration)
-│               │   ├── commande.service.ts              # Service HTTP Commande
-│               │   ├── analyse-stock.service.ts         # Service HTTP Analyse Stock
-│               │   ├── traduction.service.ts            # Service i18n FR/EN (dictionnaire ~460 clés + toggle)
-│               │   └── theme.service.ts                 # Service Dark/Light mode (localStorage + CSS)
+│               │   ├── auth.service.ts                  # Auth (inscription, connexion, JWT, refresh)
+│               │   ├── categorie.service.ts             # Catégories
+│               │   ├── produit.service.ts               # Produits + images
+│               │   ├── panier.service.ts                # Panier (per-user session)
+│               │   ├── commande.service.ts              # Commandes
+│               │   ├── wishlist.service.ts              # Liste de souhaits (per-user localStorage)
+│               │   ├── compare.service.ts               # Comparateur produits
+│               │   ├── ai.service.ts                    # Chatbot IA
+│               │   ├── analyse-stock.service.ts         # Analyse Stock
+│               │   ├── traduction.service.ts            # i18n FR/EN (~500 clés)
+│               │   └── theme.service.ts                 # Dark/Light mode
 │               └── composants/
-│                   ├── layouts/                          # Wrappers de mise en page
-│                   │   ├── layout-frontoffice/
-│                   │   │   └── layout-frontoffice.component.ts  # Shell public (navbar + footer)
-│                   │   └── layout-backoffice/
-│                   │       └── layout-backoffice.component.ts   # Shell admin (sidebar + topbar)
+│                   ├── layouts/
+│                   │   ├── layout-frontoffice/           # Navbar + footer + mini-cart + mobile search
+│                   │   └── layout-backoffice/            # Sidebar + topbar
 │                   ├── frontoffice/                      # Pages publiques
-│                   │   ├── accueil/
-│                   │   │   └── accueil.component.ts      # Page d'accueil (hero, stats, catégories)
-│                   │   ├── catalogue/
-│                   │   │   └── catalogue.component.ts    # Catalogue produits (grille, recherche, ajout panier)
-│                   │   ├── detail-produit/
-│                   │   │   └── detail-produit.component.ts  # Détail produit + similaires + ajout panier
-│                   │   ├── categorie-produits/
-│                   │   │   └── categorie-produits.component.ts  # Produits par catégorie
-│                   │   ├── panier/
-│                   │   │   └── panier.component.ts       # Panier d'achat (quantités, total, expiration)
-│                   │   ├── commander/
-│                   │   │   └── commander.component.ts    # Formulaire de commande (checkout)
-│                   │   └── confirmation-commande/
-│                   │       └── confirmation-commande.component.ts  # Confirmation après commande
+│                   │   ├── accueil/                      # Accueil (hero, stats, catégories)
+│                   │   ├── catalogue/                    # Catalogue (grille, recherche, filtres)
+│                   │   ├── detail-produit/               # Détail produit + cross-sell
+│                   │   ├── categorie-produits/           # Produits par catégorie
+│                   │   ├── panier/                       # Panier (quantités, total, countdown)
+│                   │   ├── commander/                    # Checkout (auto-fill user logged in)
+│                   │   ├── confirmation-commande/        # Confirmation + confettis
+│                   │   ├── wishlist/                     # Liste de souhaits
+│                   │   ├── comparer/                     # Comparateur produits
+│                   │   ├── connexion/                    # Page de connexion
+│                   │   ├── inscription/                  # Page d'inscription
+│                   │   ├── verifier-email/               # Vérification code 6 chiffres
+│                   │   ├── mot-de-passe-oublie/          # Mot de passe oublié
+│                   │   ├── reset-mot-de-passe/           # Réinitialisation mot de passe
+│                   │   ├── profil/                       # Profil utilisateur
+│                   │   └── mes-commandes/                # Historique achats
 │                   ├── partage/
-│                   │   └── sidebar/
-│                   │       └── sidebar.component.ts     # Sidebar + Topbar (navigation admin)
-│                   ├── commande/                         # Gestion commandes (backoffice)
-│                   │   ├── liste-commandes/
-│                   │   │   └── liste-commandes.component.ts  # Liste commandes (recherche, filtres)
-│                   │   └── detail-commande/
-│                   │       └── detail-commande.component.ts  # Détail + changement statut
-│                   ├── tableau-de-bord/
-│                   │   └── tableau-de-bord.component.ts # Dashboard (stats, actions rapides)
-│                   ├── categorie/
-│                   │   ├── liste-categories/
-│                   │   │   └── liste-categories.component.ts  # Liste (recherche, pagination)
-│                   │   └── formulaire-categorie/
-│                   │       └── formulaire-categorie.component.ts  # Formulaire CRUD
-│                   ├── produit/
-│                   │   ├── liste-produits/
-│                   │   │   └── liste-produits.component.ts  # Liste (recherche, filtres, pagination)
-│                   │   └── formulaire-produit/
-│                   │       └── formulaire-produit.component.ts  # Formulaire CRUD + upload image drag & drop
-│                   └── analyse-stock/
-│                       └── analyse-stock.component.ts   # Dashboard analyse stock (KPIs, ABC, tendances)
+│                   │   └── sidebar/                      # Sidebar admin (navigation + user + logout)
+│                   ├── shared/
+│                   │   ├── ai-assistant/                 # Widget chatbot IA flottant
+│                   │   ├── compare-bar/                  # Barre comparateur
+│                   │   ├── promo-countdown/              # Countdown promotions
+│                   │   └── skeleton-loader/              # Chargement squelette
+│                   ├── commande/
+│                   │   ├── liste-commandes/              # Liste commandes (admin)
+│                   │   ├── detail-commande/              # Détail + statut (admin)
+│                   │   ├── liste-utilisateurs/           # Gestion utilisateurs (admin)
+│                   │   └── formulaire-utilisateur/       # Créer utilisateur (admin)
+│                   ├── tableau-de-bord/                  # Dashboard admin
+│                   ├── categorie/                        # CRUD catégories (admin)
+│                   ├── produit/                          # CRUD produits + upload (admin)
+│                   ├── analyse-stock/                    # Analyse stock (admin)
+│                   └── email/
+│                       └── liste-emails/                 # Log emails (admin)
 │
-├── database/
-│   └── init.sql                                         # Script d'initialisation SQL
-│
-├── .gitignore                                           # Exclusions (node_modules, target, uploads/, etc.)
-├── GUIDE-INSTALLATION.md                                # Guide d'installation détaillé
-├── LANCEMENT.md                                         # Guide de lancement rapide
+├── .github/workflows/
+│   └── deploy.yml                                       # GitHub Actions → GitHub Pages
+├── .env.example                                         # Template variables d'environnement
+├── .gitignore                                           # Exclusions (secrets, node_modules, target)
+├── docker-compose.yml                                   # Orchestration Docker
+├── nixpacks.toml                                        # Build Railway
+├── railway.json                                         # Config Railway
+├── GUIDE-INSTALLATION.md                                # Guide d'installation
+├── LANCEMENT.md                                         # Guide de lancement
 └── README.md                                            # Ce fichier
 ```
 
