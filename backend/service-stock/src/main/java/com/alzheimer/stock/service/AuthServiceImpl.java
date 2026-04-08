@@ -90,6 +90,28 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public Map<String, String> renvoyerCode(String email) {
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email.toLowerCase().trim())
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé"));
+        if (utilisateur.isEmailVerifie()) {
+            throw new IllegalArgumentException("Email déjà vérifié");
+        }
+        String code = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1000000));
+        utilisateur.setTokenVerification(code);
+        utilisateurRepository.save(utilisateur);
+        String mailError = mailService.envoyerCodeVerification(utilisateur.getEmail(), utilisateur.getPrenom(), code);
+        Map<String, String> response = new HashMap<>();
+        response.put("email", utilisateur.getEmail());
+        if (mailError == null) {
+            response.put("message", "Nouveau code envoyé à " + utilisateur.getEmail());
+        } else {
+            response.put("message", "Code de vérification");
+            response.put("code", code);
+        }
+        return response;
+    }
+
+    @Override
     public AuthReponseDTO verifierCode(String email, String code) {
         Utilisateur utilisateur = utilisateurRepository.findByEmail(email.toLowerCase().trim())
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé"));
@@ -126,12 +148,33 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 
+    // Brute force protection: max 5 attempts per 15 minutes per email
+    private final java.util.concurrent.ConcurrentHashMap<String, long[]> loginAttempts = new java.util.concurrent.ConcurrentHashMap<>();
+
     @Override
     public AuthReponseDTO connexion(ConnexionDTO dto) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(dto.getEmail().toLowerCase().trim(), dto.getMotDePasse()));
+        String email = dto.getEmail().toLowerCase().trim();
 
-        Utilisateur utilisateur = utilisateurRepository.findByEmail(dto.getEmail().toLowerCase().trim())
+        long[] record = loginAttempts.get(email);
+        if (record != null && record[0] >= 5 && (System.currentTimeMillis() - record[1]) < 900_000) {
+            long mins = (900_000 - (System.currentTimeMillis() - record[1])) / 60_000 + 1;
+            throw new IllegalArgumentException("Trop de tentatives. Réessayez dans " + mins + " minutes.");
+        }
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, dto.getMotDePasse()));
+        } catch (Exception e) {
+            loginAttempts.compute(email, (k, v) -> {
+                if (v == null || (System.currentTimeMillis() - v[1]) > 900_000) return new long[]{1, System.currentTimeMillis()};
+                return new long[]{v[0] + 1, v[1]};
+            });
+            throw e;
+        }
+
+        loginAttempts.remove(email);
+
+        Utilisateur utilisateur = utilisateurRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé"));
 
         if (!utilisateur.isActif()) {

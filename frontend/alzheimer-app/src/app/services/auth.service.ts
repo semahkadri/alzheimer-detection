@@ -26,6 +26,10 @@ export class AuthService {
     return this.http.post<{ message: string; email: string; code: string }>(`${this.apiUrl}/inscription`, data);
   }
 
+  renvoyerCode(email: string): Observable<{ message: string; email: string; code?: string }> {
+    return this.http.post<{ message: string; email: string; code?: string }>(`${this.apiUrl}/renvoyer-code`, { email });
+  }
+
   verifierCode(email: string, code: string): Observable<AuthReponse> {
     return this.http.post<AuthReponse>(`${this.apiUrl}/verifier-code`, { email, code }).pipe(
       tap(res => this.storeAuth(res))
@@ -132,6 +136,18 @@ export class AuthService {
 
   get isAdmin(): boolean {
     return this.currentUser?.role === 'ADMIN';
+  }
+
+  /** Check if access token is expired by decoding the JWT payload */
+  isTokenExpired(): boolean {
+    const token = this.accessToken;
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload.exp * 1000 < Date.now();
+    } catch {
+      return true;
+    }
   }
 
   private storeAuth(res: AuthReponse): void {

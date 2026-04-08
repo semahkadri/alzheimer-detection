@@ -6,10 +6,12 @@ export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn) {
+  if (authService.isLoggedIn && !authService.isTokenExpired()) {
     return true;
   }
 
+  // Token missing or expired — clean up and redirect
+  if (authService.isLoggedIn) authService.deconnexion();
   router.navigate(['/connexion'], { queryParams: { redirect: router.url } });
   return false;
 };
@@ -18,11 +20,12 @@ export const adminGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isLoggedIn && authService.isAdmin) {
+  if (authService.isLoggedIn && !authService.isTokenExpired() && authService.isAdmin) {
     return true;
   }
 
-  if (!authService.isLoggedIn) {
+  if (!authService.isLoggedIn || authService.isTokenExpired()) {
+    if (authService.isLoggedIn) authService.deconnexion();
     router.navigate(['/connexion'], { queryParams: { redirect: router.url } });
   } else {
     router.navigate(['/']);
@@ -35,8 +38,7 @@ export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Only block if logged in AND has a valid user in memory
-  if (authService.isLoggedIn && authService.currentUser) {
+  if (authService.isLoggedIn && authService.currentUser && !authService.isTokenExpired()) {
     router.navigate(['/']);
     return false;
   }
