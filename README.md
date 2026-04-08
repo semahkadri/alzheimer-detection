@@ -94,8 +94,9 @@ Le projet suit une architecture **microservices** avec les composants suivants :
 |-----------|------|------|
 | **Eureka Server** | Registre de découverte de services. Tous les microservices s'y enregistrent automatiquement au démarrage. Permet la résolution dynamique des adresses. | 8761 |
 | **API Gateway** | Point d'entrée unique pour le frontend en production. Route les requêtes vers les microservices. Gère le CORS et le load balancing. | 8080 |
-| **Service Stock** | Microservice métier responsable de la gestion des catégories, produits (avec upload d'images), panier (avec expiration automatique), commandes, tableau de bord et analyse de stock. Expose les API REST CRUD, l'upload de fichiers, l'analyse avancée (KPIs, ABC, tendances) et la documentation Swagger. Sert les images uploadées via `/uploads/**`. | 8081 |
-| **Frontend Angular** | Interface web comprenant un **frontoffice** public (catalogue, panier, commande, détail produit, catégories) et un **backoffice** d'administration (sidebar, tableau de bord, CRUD catégories/produits avec upload d'images drag & drop, gestion commandes, analyse de stock). Supporte le mode sombre/clair et le bilingue FR/EN. | 4200 |
+| **Service Stock** | Microservice métier : gestion des catégories, produits, panier, commandes, tableau de bord, analyse de stock, chatbot IA (OpenRouter) et authentification JWT (inscription, connexion, vérification email, mot de passe oublié). Expose les API REST, Swagger, et gère l'envoi d'emails (SMTP local / Resend en production). | 8081 |
+| **Service User** | Microservice d'authentification standalone (développement local). JWT, Spring Security, BCrypt, vérification email, gestion des rôles (ADMIN/UTILISATEUR). En production, l'auth est intégrée dans service-stock. | 8082 |
+| **Frontend Angular** | **Frontoffice** : catalogue, panier, commande, wishlist, comparateur, chatbot IA, inscription, connexion, profil, historique commandes. **Backoffice** : dashboard, CRUD catégories/produits, gestion commandes/utilisateurs, analyse de stock. Mode sombre/clair, bilingue FR/EN, responsive. | 4200 |
 | **PostgreSQL** | Système de gestion de base de données relationnelle stockant les catégories, produits, paniers, commandes et leurs lignes. | 5432 |
 | **uploads/** | Répertoire de stockage physique des images produit sur le disque. Créé automatiquement au démarrage du service. Les fichiers sont nommés avec un UUID pour éviter les collisions. | - |
 
@@ -109,28 +110,40 @@ Le projet suit une architecture **microservices** avec les composants suivants :
 |-------------|---------|-------------|
 | Java | 17 LTS | Langage de programmation principal |
 | Spring Boot | 3.2.4 | Framework de développement backend |
+| Spring Security | 6.x | Authentification JWT, rôles, BCrypt |
 | Spring Cloud | 2023.0.1 | Écosystème microservices (Eureka, Gateway) |
 | Spring Data JPA | 3.2.4 | Couche d'accès aux données (ORM) |
 | Spring Validation | 3.2.4 | Validation des données entrantes |
-| Spring Multipart | 3.2.4 | Upload de fichiers (images produit, 5 Mo max) |
+| Spring Mail | 3.2.4 | Envoi d'emails (SMTP Gmail en local) |
+| JJWT | 0.12.5 | Génération et validation de tokens JWT |
 | Netflix Eureka | 4.1.0 | Découverte et enregistrement de services |
 | Spring Cloud Gateway | 4.1.0 | Passerelle API et routage |
 | SpringDoc OpenAPI | 2.5.0 | Documentation Swagger UI automatique |
-| Lombok | 1.18.30 | Réduction du code boilerplate (getters, setters, builders) |
-| PostgreSQL Driver | 42.6.2 | Connecteur JDBC pour PostgreSQL |
+| Lombok | 1.18.30 | Réduction du code boilerplate |
 | Maven | 3.8+ | Gestionnaire de dépendances et build |
+
+### Authentification et Email
+
+| Technologie | Utilisation |
+|-------------|-------------|
+| JWT (JSON Web Token) | Tokens d'accès (24h) et de rafraîchissement (7j) |
+| BCrypt | Hachage sécurisé des mots de passe |
+| Resend API | Envoi d'emails en production (HTTP, Railway compatible) |
+| Gmail SMTP | Envoi d'emails en local (port 587, STARTTLS) |
+| OpenRouter API | Chatbot IA avec fallback multi-modèles (Qwen, Arcee, Nvidia) |
 
 ### Frontend
 
 | Technologie | Version | Utilisation |
 |-------------|---------|-------------|
-| Angular | 17.3 | Framework de développement frontend |
+| Angular | 17.3 | Framework frontend (Standalone Components) |
 | TypeScript | 5.4 | Langage de programmation typé |
-| Bootstrap | 5.3.3 | Framework CSS pour le design responsive |
-| Bootstrap Icons | 1.11.3 | Bibliothèque d'icônes |
+| Bootstrap | 5.3.3 | Framework CSS responsive |
+| Bootstrap Icons | 1.11.3 | Bibliothèque d'icônes (frontoffice) |
+| Font Awesome | 6.4.0 | Bibliothèque d'icônes (backoffice) |
 | RxJS | 7.8 | Programmation réactive (Observables) |
-| Angular Router | 17.3 | Navigation et routage SPA |
-| Angular HttpClient | 17.3 | Communication HTTP avec le backend |
+| Angular Router | 17.3 | Navigation SPA + Guards (auth, admin, guest) |
+| JWT Interceptor | - | Injection automatique du token Bearer |
 
 ### Base de données
 
@@ -1614,20 +1627,57 @@ ng serve --open
 
 ---
 
-## 13. Évolutions futures
+## 13. Déploiement
 
-Le projet est conçu de manière **itérative**. Les modules suivants pourront être ajoutés en tant que nouveaux microservices :
+### Architecture de déploiement
 
-| Module | Description | Priorité |
-|--------|-------------|----------|
-| Gestion des Patients | Dossiers patients, historique médical | Haute |
-| Détection IA | Algorithmes de détection précoce Alzheimer | Haute |
-| Gestion des Utilisateurs | Authentification, rôles, permissions (JWT) | Haute |
-| Gestion des Rendez-vous | Planification des consultations | Moyenne |
-| Notifications | Alertes email/SMS pour les suivis | Basse |
-| Gestion documentaire | Upload et stockage de documents médicaux | Basse |
+| Composant | Service | Plateforme |
+|-----------|---------|------------|
+| Frontend | Angular 17 | GitHub Pages (via GitHub Actions) |
+| Backend | service-stock (Java 17) | Railway (Nixpacks) |
+| Base de données | PostgreSQL | Neon (cloud) |
+| Emails (production) | Resend HTTP API | Railway env vars |
+| Chatbot IA | OpenRouter API | Railway env vars |
 
-Chaque nouveau module sera un **microservice indépendant** qui s'enregistrera automatiquement dans Eureka et sera accessible via l'API Gateway.
+### Variables d'environnement Railway
+
+```
+SPRING_DATASOURCE_URL=jdbc:postgresql://...
+SPRING_DATASOURCE_USERNAME=...
+SPRING_DATASOURCE_PASSWORD=...
+JWT_SECRET=...
+RESEND_API_KEY=...
+AI_API_KEY=...
+```
+
+---
+
+## 14. Fonctionnalités d'authentification
+
+| Fonctionnalité | Description |
+|----------------|-------------|
+| Inscription | Création de compte UTILISATEUR avec vérification email (SMTP local / auto-vérification en production) |
+| Connexion | JWT access token (24h) + refresh token (7j) |
+| Vérification email | Code à 6 chiffres envoyé par email (Gmail SMTP en local) |
+| Mot de passe oublié | Lien de réinitialisation par email (ou redirection directe si email échoue) |
+| Profil | Modification nom/prénom, changement de mot de passe |
+| Historique achats | Commandes liées au compte via email client |
+| Gestion utilisateurs (admin) | Créer, modifier rôles, activer/désactiver, supprimer |
+| Protection brute force | Max 5 tentatives de connexion par 15 minutes par email |
+| Guards frontend | authGuard (vérifie expiration JWT), adminGuard, guestGuard |
+| Admin par défaut | `admin@pharmacare.tn` / `Admin@1234` (créé au premier démarrage) |
+
+---
+
+## 15. Évolutions futures
+
+| Module | Description | Statut |
+|--------|-------------|--------|
+| ~~Gestion des Utilisateurs~~ | ~~Authentification, rôles, JWT~~ | ✅ Implémenté |
+| Gestion des Patients | Dossiers patients, historique médical | À venir |
+| Détection IA | Algorithmes de détection précoce Alzheimer | À venir |
+| Gestion des Rendez-vous | Planification des consultations | À venir |
+| Domaine email personnalisé | Vérification Resend pour envoi à tous les emails | À venir |
 
 ---
 
@@ -1635,6 +1685,6 @@ Chaque nouveau module sera un **microservice indépendant** qui s'enregistrera a
 
 Développé dans le cadre du projet **Détection de la Maladie d'Alzheimer**.
 
-**Technologies** : Spring Boot / Spring Cloud / Angular / PostgreSQL
+**Technologies** : Java 17 / Spring Boot / Spring Security / Angular 17 / PostgreSQL / JWT / OpenRouter AI
 
-**Architecture** : Microservices
+**Architecture** : Microservices (Eureka + Gateway + service-stock + service-user)
